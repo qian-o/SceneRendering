@@ -1,9 +1,11 @@
 ﻿using Core.Tools;
+using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using Silk.NET.OpenGLES.Extensions.ImGui;
 using Silk.NET.Windowing;
+using System.Numerics;
 
 namespace Core.Contracts.Windows;
 
@@ -132,7 +134,20 @@ public abstract class Game
 
             _fpsSample.Add(1.0d / obj);
 
+            gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
             Render(obj);
+
+            imGuiController!.Update((float)obj);
+
+            ImGui.GetBackgroundDrawList().AddText(new Vector2(0, 0), ImGui.GetColorU32(new Vector4(0.0f, 1.0f, 0.0f, 1.0f)), fps.ToString());
+
+            ImGui.Begin("Camera Settings");
+
+            ImGui.DragFloat("Camera Speed", ref cameraSpeed, 0.5f, 0.5f, 20.0f);
+            ImGui.DragFloat("Camera Sensitivity", ref cameraSensitivity, 0.2f, 0.2f, 10.0f);
+
+            imGuiController.Render();
         };
         _window.Closing += Closing;
     }
