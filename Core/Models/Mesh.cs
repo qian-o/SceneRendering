@@ -1,7 +1,5 @@
-﻿using Core.Helpers;
-using Core.Tools;
+﻿using Core.Tools;
 using Silk.NET.OpenGLES;
-using Program = Core.Tools.Program;
 
 namespace Core.Models;
 
@@ -69,12 +67,18 @@ public unsafe class Mesh : IDisposable
         gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
     }
 
-    public void Draw(Program program)
+    public void Draw(uint position, uint? normal = null, uint? texCoords = null)
     {
         _gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
-        _gl.VertexAttribPointer((uint)program.GetAttrib(ShaderHelper.PositionAttrib), 3, GLEnum.Float, false, 8 * sizeof(float), (void*)0);
-        _gl.VertexAttribPointer((uint)program.GetAttrib(ShaderHelper.NormalAttrib), 3, GLEnum.Float, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        _gl.VertexAttribPointer((uint)program.GetAttrib(ShaderHelper.TexCoordsAttrib), 2, GLEnum.Float, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, 8 * sizeof(float), (void*)0);
+        if (normal != null)
+        {
+            _gl.VertexAttribPointer(normal.Value, 3, GLEnum.Float, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        }
+        if (texCoords != null)
+        {
+            _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        }
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);

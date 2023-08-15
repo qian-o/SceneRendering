@@ -16,7 +16,7 @@ public class Camera
 
     public int Height { get; set; }
 
-    public Vector3D<float> Position { get; set; } = new(0.0f, 0.0f, 1.0f);
+    public Vector3D<float> Position { get; set; } = new(0.0f, 0.0f, 0.0f);
 
     public Vector3D<float> Front => front;
 

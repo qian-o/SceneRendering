@@ -82,7 +82,11 @@ public class Cube : BaseElement
 
     public override void Draw(Program program)
     {
-        bool anyMaterial = program.GetUniform(ShaderHelper.MaterialUniform) >= 0;
+        bool anyMaterial = program.GetUniform(ShaderHelper.Lighting_MaterialUniform) >= 0;
+
+        uint position = (uint)program.GetAttrib(ShaderHelper.MVP_PositionAttrib);
+        uint normal = (uint)program.GetAttrib(ShaderHelper.MVP_NormalAttrib);
+        uint texCoords = (uint)program.GetAttrib(ShaderHelper.MVP_TexCoordsAttrib);
 
         foreach (Mesh mesh in Meshes)
         {
@@ -101,14 +105,14 @@ public class Cube : BaseElement
                     Shininess = 64.0f
                 };
 
-                program.SetUniform(ShaderHelper.MaterialUniform, material);
+                program.SetUniform(ShaderHelper.Lighting_MaterialUniform, material);
             }
             else
             {
-                program.SetUniform(ShaderHelper.TexUniform, 0);
+                program.SetUniform(ShaderHelper.Texture_TexUniform, 0);
             }
 
-            mesh.Draw(program);
+            mesh.Draw(position, normal, texCoords);
         }
     }
 }

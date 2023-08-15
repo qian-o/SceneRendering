@@ -1,8 +1,8 @@
 ﻿using Core.Contracts.Windows;
 using Core.Elements;
 using Core.Helpers;
+using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
-using System.Drawing;
 using Program = Core.Tools.Program;
 using Shader = Core.Tools.Shader;
 
@@ -11,7 +11,7 @@ namespace Scene1;
 public class GameWindow : Game
 {
     private Program program = null!;
-    private Cube cube = null!;
+    private Skybox skybox = null!;
 
     protected override void Load()
     {
@@ -23,15 +23,22 @@ public class GameWindow : Game
         gl.Enable(GLEnum.Blend);
         gl.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
 
-        using Shader vs = new(gl, GLEnum.VertexShader, ShaderHelper.GetModelViewProjectionShader());
-        using Shader fs = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTextureShader());
+        using Shader vs = new(gl, GLEnum.VertexShader, ShaderHelper.GetSkybox_VertShader());
+        using Shader fs = new(gl, GLEnum.FragmentShader, ShaderHelper.GetSkybox_FragShader());
 
         program = new Program(gl);
         program.Attach(vs, fs);
 
-        cube = new Cube(gl);
+        skybox = new Skybox(gl);
 
-        cube.GetDiffuseTex().WriteColor(Color.Red);
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX, "Resources/Textures/skybox/right.jpg");
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 1, "Resources/Textures/skybox/left.jpg");
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 2, "Resources/Textures/skybox/top.jpg");
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 3, "Resources/Textures/skybox/bottom.jpg");
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 4, "Resources/Textures/skybox/front.jpg");
+        skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 5, "Resources/Textures/skybox/back.jpg");
+
+        camera.Position = new Vector3D<float>(0.0f, 0.0f, 0.0f);
     }
 
     protected override void Update(double obj)
@@ -41,22 +48,19 @@ public class GameWindow : Game
 
     protected override void Render(double obj)
     {
+        gl.DepthFunc(GLEnum.Lequal);
+
         program.Enable();
+        program.EnableAttrib(ShaderHelper.Skybox_PositionAttrib);
 
-        program.EnableAttrib(ShaderHelper.PositionAttrib);
-        program.EnableAttrib(ShaderHelper.NormalAttrib);
-        program.EnableAttrib(ShaderHelper.TexCoordsAttrib);
+        program.SetUniform(ShaderHelper.Skybox_ViewUniform, camera.View);
+        program.SetUniform(ShaderHelper.Skybox_ProjectionUniform, camera.Projection);
 
-        program.SetUniform(ShaderHelper.ModelUniform, cube.Transform);
-        program.SetUniform(ShaderHelper.ViewUniform, camera.View);
-        program.SetUniform(ShaderHelper.ProjectionUniform, camera.Projection);
+        skybox.Draw(program);
 
-        cube.Draw(program);
-
-        program.DisableAttrib(ShaderHelper.PositionAttrib);
-        program.DisableAttrib(ShaderHelper.NormalAttrib);
-        program.DisableAttrib(ShaderHelper.TexCoordsAttrib);
-
+        program.DisableAttrib(ShaderHelper.Skybox_PositionAttrib);
         program.Disable();
+
+        gl.DepthFunc(GLEnum.Less);
     }
 }
