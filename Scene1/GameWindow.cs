@@ -3,6 +3,7 @@ using Core.Elements;
 using Core.Helpers;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
+using Plane = Core.Elements.Plane;
 using Program = Core.Tools.Program;
 using Shader = Core.Tools.Shader;
 
@@ -17,6 +18,7 @@ public class GameWindow : Game
 
     #region Elements
     private Skybox skybox = null!;
+    private Plane floor = null!;
     private Cube cube = null!;
     #endregion
 
@@ -50,9 +52,17 @@ public class GameWindow : Game
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 4, "Resources/Textures/skybox/front.jpg");
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 5, "Resources/Textures/skybox/back.jpg");
 
-        cube = new Cube(gl);
-
+        cube = new Cube(gl)
+        {
+            Transform = Matrix4X4.CreateTranslation(0.0f, 0.5001f, 0.0f)
+        };
         cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
+
+        floor = new Plane(gl, new Vector2D<float>(500.0f))
+        {
+            Transform = Matrix4X4.CreateScale(1000.0f)
+        };
+        floor.GetDiffuseTex().WriteImage("Resources/Textures/wood_floor.jpg");
     }
 
     protected override void Update(double obj)
@@ -67,10 +77,13 @@ public class GameWindow : Game
         textureProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
         textureProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
 
-        textureProgram.SetUniform(ShaderHelper.MVP_ModelUniform, cube.Transform);
         textureProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
         textureProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
 
+        textureProgram.SetUniform(ShaderHelper.MVP_ModelUniform, floor.Transform);
+        floor.Draw(textureProgram);
+
+        textureProgram.SetUniform(ShaderHelper.MVP_ModelUniform, cube.Transform);
         cube.Draw(textureProgram);
 
         textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);

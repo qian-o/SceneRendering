@@ -13,7 +13,12 @@ public class Cube : BaseElement
 {
     public override Mesh[] Meshes { get; }
 
-    public Cube(GL gl) : base(gl)
+    public Cube(GL gl) : this(gl, new Vector2D<float>(1.0f, 1.0f))
+    {
+
+    }
+
+    public Cube(GL gl, Vector2D<float> textureScale) : base(gl)
     {
         Vertex[] vertices = new Vertex[]
         {
@@ -66,6 +71,12 @@ public class Cube : BaseElement
             new Vertex(new Vector3D<float>(-0.5f,  0.5f, -0.5f), new Vector3D<float>(0.0f, 1.0f, 0.0f), new Vector2D<float>(0.0f, 1.0f))
         };
         uint[] indices = vertices.Select((a, b) => (uint)b).ToArray();
+
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            vertices[i].TexCoords.X *= textureScale.X;
+            vertices[i].TexCoords.Y *= textureScale.Y;
+        }
 
         Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture2D(gl, GLEnum.Rgba8, GLEnum.Repeat), new Texture2D(gl, GLEnum.Rgba8, GLEnum.Repeat)) };
     }
