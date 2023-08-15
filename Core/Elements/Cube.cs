@@ -80,17 +80,20 @@ public class Cube : BaseElement
         return Meshes[0].Specular2D!;
     }
 
-    public override void Draw(Program program, bool useSpecular)
+    public override void Draw(Program program)
     {
+        bool anyMaterial = program.GetUniform(ShaderHelper.MaterialUniform) >= 0;
+
         foreach (Mesh mesh in Meshes)
         {
             _gl.ActiveTexture(GLEnum.Texture0);
             mesh.Diffuse2D!.Enable();
-            _gl.ActiveTexture(GLEnum.Texture1);
-            mesh.Specular2D!.Enable();
 
-            if (useSpecular)
+            if (anyMaterial)
             {
+                _gl.ActiveTexture(GLEnum.Texture1);
+                mesh.Specular2D!.Enable();
+
                 Material material = new()
                 {
                     Diffuse = 0,

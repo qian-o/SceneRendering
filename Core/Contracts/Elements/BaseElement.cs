@@ -18,7 +18,7 @@ public abstract class BaseElement : IDisposable
         _gl = gl;
     }
 
-    public abstract void Draw(Program program, bool useSpecular);
+    public abstract void Draw(Program program);
 
     public void Dispose()
     {

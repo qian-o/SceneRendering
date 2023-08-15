@@ -1,7 +1,6 @@
 ﻿using Core.Contracts.Windows;
 using Core.Elements;
 using Core.Helpers;
-using Core.Tools;
 using Silk.NET.OpenGLES;
 using System.Drawing;
 using Program = Core.Tools.Program;
@@ -23,8 +22,6 @@ public class GameWindow : Game
 
         gl.Enable(GLEnum.Blend);
         gl.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
-
-        gl.ClearColor(Color.CornflowerBlue);
 
         using Shader vs = new(gl, GLEnum.VertexShader, ShaderHelper.GetModelViewProjectionShader());
         using Shader fs = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTextureShader());
@@ -54,7 +51,7 @@ public class GameWindow : Game
         program.SetUniform(ShaderHelper.ViewUniform, camera.View);
         program.SetUniform(ShaderHelper.ProjectionUniform, camera.Projection);
 
-        cube.Draw(program, false);
+        cube.Draw(program);
 
         program.DisableAttrib(ShaderHelper.PositionAttrib);
         program.DisableAttrib(ShaderHelper.NormalAttrib);
