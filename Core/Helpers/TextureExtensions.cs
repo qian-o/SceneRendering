@@ -16,7 +16,7 @@ public unsafe static class TextureExtensions
 
         image.ReadPixels(new SKImageInfo(image.Width, image.Height, SKColorType.Rgba8888), pboData, image.Width * 4, 0, 0);
 
-        texture.FlushTexture(new Vector2D<uint>((uint)image.Width, (uint)image.Height), GLEnum.Rgba, GLEnum.Byte);
+        texture.FlushTexture(new Vector2D<uint>((uint)image.Width, (uint)image.Height), GLEnum.Rgba, GLEnum.UnsignedByte);
 
         image.Dispose();
     }
@@ -33,12 +33,12 @@ public unsafe static class TextureExtensions
 
     public static void WriteColor(this Texture2D texture, Vector4D<byte> color)
     {
-        texture.AllocationBuffer(1, out nint pboData);
+        texture.AllocationBuffer(4, out nint pboData);
 
         Span<Vector4D<byte>> span = new((void*)pboData, 1);
 
         span[0] = color;
 
-        texture.FlushTexture(new Vector2D<uint>(1, 1), GLEnum.Rgba, GLEnum.Byte);
+        texture.FlushTexture(new Vector2D<uint>(1, 1), GLEnum.Rgba, GLEnum.UnsignedByte);
     }
 }

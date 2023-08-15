@@ -1,4 +1,5 @@
-﻿using Silk.NET.Maths;
+﻿using Core.Contracts.Models.ShaderStructures;
+using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 
 namespace Core.Tools;
@@ -168,6 +169,24 @@ public unsafe class Program : IDisposable
         Enable();
 
         _gl.UniformMatrix4(GetUniform(name), 1, false, (float*)&data);
+    }
+
+    public void SetUniform(string name, IStructure structure)
+    {
+        Enable();
+
+        structure.Enable(name, this);
+    }
+
+    public void SetUniform(string name, IEnumerable<IStructure> structures)
+    {
+        Enable();
+
+        int index = 0;
+        foreach (IStructure structure in structures)
+        {
+            structure.Enable(name, this, index++);
+        }
     }
 
     public void Dispose()

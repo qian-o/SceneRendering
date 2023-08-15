@@ -47,14 +47,11 @@ public unsafe class Texture2D : IDisposable
     public void AllocationBuffer(uint pboSize, out nint pboData, bool needRead = false)
     {
         _gl.BindBuffer(GLEnum.PixelUnpackBuffer, _pbo);
-        _gl.BindTexture(GLEnum.Texture2D, _tex);
 
         _gl.BufferData(GLEnum.PixelUnpackBuffer, pboSize, null, GLEnum.StreamDraw);
 
-        uint access = needRead ? (uint)(GLEnum.MapReadBit | GLEnum.MapWriteBit) : (uint)GLEnum.MapWriteBit;
-        pboData = (nint)_gl.MapBufferRange(GLEnum.PixelUnpackBuffer, 0, pboSize, access);
+        pboData = (nint)_gl.MapBufferRange(GLEnum.PixelUnpackBuffer, 0, pboSize, needRead ? (uint)(GLEnum.MapReadBit | GLEnum.MapWriteBit) : (uint)GLEnum.MapWriteBit);
 
-        _gl.BindTexture(GLEnum.Texture2D, 0);
         _gl.BindBuffer(GLEnum.PixelUnpackBuffer, 0);
     }
 
