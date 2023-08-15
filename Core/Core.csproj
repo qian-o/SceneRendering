@@ -20,10 +20,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Resources\Textures\" />
-	</ItemGroup>
-
-	<ItemGroup>
+		<None Update="Resources\Textures\container2.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\container2_specular.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Resources\Textures\skybox\back.jpg">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

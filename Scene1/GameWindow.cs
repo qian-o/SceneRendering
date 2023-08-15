@@ -10,8 +10,15 @@ namespace Scene1;
 
 public class GameWindow : Game
 {
-    private Program program = null!;
+    #region Programs
+    private Program skyboxProgram = null!;
+    private Program textureProgram = null!;
+    #endregion
+
+    #region Elements
     private Skybox skybox = null!;
+    private Cube cube = null!;
+    #endregion
 
     protected override void Load()
     {
@@ -23,11 +30,16 @@ public class GameWindow : Game
         gl.Enable(GLEnum.Blend);
         gl.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
 
-        using Shader vs = new(gl, GLEnum.VertexShader, ShaderHelper.GetSkybox_VertShader());
-        using Shader fs = new(gl, GLEnum.FragmentShader, ShaderHelper.GetSkybox_FragShader());
+        using Shader skyboxVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetSkybox_VertexShader());
+        using Shader skyboxFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetSkybox_FragmentShader());
+        using Shader mvpVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetMVP_VertexShader());
+        using Shader textureFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTexture_FragmentShader());
 
-        program = new Program(gl);
-        program.Attach(vs, fs);
+        skyboxProgram = new Program(gl);
+        skyboxProgram.Attach(skyboxVertex, skyboxFragment);
+
+        textureProgram = new Program(gl);
+        textureProgram.Attach(mvpVertex, textureFragment);
 
         skybox = new Skybox(gl);
 
@@ -38,7 +50,9 @@ public class GameWindow : Game
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 4, "Resources/Textures/skybox/front.jpg");
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 5, "Resources/Textures/skybox/back.jpg");
 
-        camera.Position = new Vector3D<float>(0.0f, 0.0f, 0.0f);
+        cube = new Cube(gl);
+
+        cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
     }
 
     protected override void Update(double obj)
@@ -48,18 +62,34 @@ public class GameWindow : Game
 
     protected override void Render(double obj)
     {
+        textureProgram.Enable();
+        textureProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
+        textureProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
+        textureProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+
+        textureProgram.SetUniform(ShaderHelper.MVP_ModelUniform, cube.Transform);
+        textureProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
+        textureProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
+
+        cube.Draw(textureProgram);
+
+        textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
+        textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
+        textureProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+        textureProgram.Disable();
+
         gl.DepthFunc(GLEnum.Lequal);
 
-        program.Enable();
-        program.EnableAttrib(ShaderHelper.Skybox_PositionAttrib);
+        skyboxProgram.Enable();
+        skyboxProgram.EnableAttrib(ShaderHelper.Skybox_PositionAttrib);
 
-        program.SetUniform(ShaderHelper.Skybox_ViewUniform, camera.View);
-        program.SetUniform(ShaderHelper.Skybox_ProjectionUniform, camera.Projection);
+        skyboxProgram.SetUniform(ShaderHelper.Skybox_ViewUniform, Matrix4X4.CreateTranslation(camera.Position) * camera.View);
+        skyboxProgram.SetUniform(ShaderHelper.Skybox_ProjectionUniform, camera.Projection);
 
-        skybox.Draw(program);
+        skybox.Draw(skyboxProgram);
 
-        program.DisableAttrib(ShaderHelper.Skybox_PositionAttrib);
-        program.Disable();
+        skyboxProgram.DisableAttrib(ShaderHelper.Skybox_PositionAttrib);
+        skyboxProgram.Disable();
 
         gl.DepthFunc(GLEnum.Less);
     }

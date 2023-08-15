@@ -28,7 +28,7 @@ public static class ShaderHelper
     // skybox.frag
     public const string Skybox_SkyboxUniform = "skybox";
 
-    public static string GetMVP_VertShader()
+    public static string GetMVP_VertexShader()
     {
         return @$"
 #version 320 es
@@ -54,7 +54,7 @@ void main() {{
 ";
     }
 
-    public static string GetTexture_FragShader()
+    public static string GetTexture_FragmentShader()
     {
         return @$"
 #version 320 es
@@ -73,7 +73,7 @@ void main() {{
 ";
     }
 
-    public static string GetLighting_FragShader(int pointLights)
+    public static string GetLighting_FragmentShader(int pointLights)
     {
         return @$"
 #version 320 es
@@ -230,7 +230,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 ";
     }
 
-    public static string GetSkybox_VertShader()
+    public static string GetSkybox_VertexShader()
     {
         return @$"
 #version 320 es
@@ -243,13 +243,13 @@ uniform mat4 {Skybox_ViewUniform};
 uniform mat4 {Skybox_ProjectionUniform};
 
 void main() {{
-   gl_Position = ({Skybox_ProjectionUniform} * {Skybox_ViewUniform} * vec4({Skybox_PositionAttrib}, 1.0));
+   gl_Position = ({Skybox_ProjectionUniform} * {Skybox_ViewUniform} * vec4({Skybox_PositionAttrib}, 1.0)).xyww;
    TexCoords = {Skybox_PositionAttrib};
 }}
 ";
     }
 
-    public static string GetSkybox_FragShader()
+    public static string GetSkybox_FragmentShader()
     {
         return @$"
 #version 320 es
