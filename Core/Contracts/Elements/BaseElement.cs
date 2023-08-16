@@ -22,6 +22,11 @@ public abstract class BaseElement : IDisposable
 
     public void Dispose()
     {
+        foreach (Mesh mesh in Meshes)
+        {
+            mesh.Dispose();
+        }
+
         GC.SuppressFinalize(this);
     }
 }

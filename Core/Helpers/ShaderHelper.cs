@@ -28,6 +28,10 @@ public static class ShaderHelper
     // skybox.frag
     public const string Skybox_SkyboxUniform = "skybox";
 
+    // texture-gaussian_blur.frag
+    public const string GaussianBlur_RadiusUniform = "radius";
+    public const string GaussianBlur_TotalWeightUniform = "totalWeight";
+
     public static string GetMVP_VertexShader()
     {
         return @$"
@@ -266,5 +270,69 @@ void main() {{
     FragColor = vec4(texture({Skybox_SkyboxUniform}, TexCoords));
 }}
 ";
+    }
+
+    public static string GetGaussianBlur_FragmentShader(bool horizontal = true)
+    {
+        string formula = horizontal ? @$"vec2(1.0 / float(tex_offset.x) * float(i), 0.0)" : @$"vec2(0.0, 1.0 / float(tex_offset.y) * float(i))";
+
+        return @$"
+#version 320 es
+
+precision highp float;
+
+in vec2 TexCoords;
+
+out vec4 FragColor;
+
+uniform sampler2D tex;
+uniform int radius;
+
+// PI
+const float PI = 3.1415926;
+
+float GetWeight(int i);
+
+void main() {{
+    vec4 color = vec4(texture(tex, TexCoords));
+
+    if(radius <= 1) {{
+        FragColor = color;
+
+        return;
+    }}
+
+    ivec2 tex_offset = textureSize(tex, 0);
+
+    vec3 result = color.rgb * GetWeight(0);
+
+    for(int i = 1; i < radius; ++i) {{
+        result += texture(tex, TexCoords + {formula}).rgb * GetWeight(i);
+        result += texture(tex, TexCoords - {formula}).rgb * GetWeight(i);
+    }}
+
+    FragColor = vec4(result, color.a);
+}}
+
+float GetWeight(int i) {{
+    float sigma = float(radius) / 3.0;
+
+    return (1.0 / sqrt(2.0 * PI * sigma * sigma)) * exp(-float(i * i) / (2.0 * sigma * sigma));
+}}
+";
+    }
+
+    public static float GetTotalWeight(int radius)
+    {
+        float totalWeight = 0.0f;
+
+        float sigma = radius / 3.0f;
+        
+        for (int i = 0; i < radius; i++)
+        {
+            totalWeight += 1.0f / (float)Math.Sqrt(2.0f * Math.PI * sigma * sigma) * (float)Math.Exp(-(float)(i * i) / (2.0f * sigma * sigma));
+        }
+
+        return totalWeight;
     }
 }

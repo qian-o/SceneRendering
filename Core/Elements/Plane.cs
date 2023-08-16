@@ -58,6 +58,8 @@ public class Plane : BaseElement
         uint normal = (uint)program.GetAttrib(ShaderHelper.MVP_NormalAttrib);
         uint texCoords = (uint)program.GetAttrib(ShaderHelper.MVP_TexCoordsAttrib);
 
+        program.SetUniform(ShaderHelper.MVP_ModelUniform, Transform);
+
         foreach (Mesh mesh in Meshes)
         {
             _gl.ActiveTexture(GLEnum.Texture0);

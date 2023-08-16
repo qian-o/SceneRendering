@@ -11,9 +11,9 @@ public unsafe class Mesh : IDisposable
 
     public uint EBO { get; }
 
-    public uint VertexCount { get; }
+    public Vertex[] Vertices { get; }
 
-    public uint IndexCount { get; }
+    public uint[] Indices { get; }
 
     public Texture2D? Diffuse2D { get; }
 
@@ -30,19 +30,22 @@ public unsafe class Mesh : IDisposable
         VBO = gl.GenBuffer();
         EBO = gl.GenBuffer();
 
-        VertexCount = (uint)vertices.Length;
-        IndexCount = (uint)indices.Length;
+        Vertices = vertices;
+        Indices = indices;
 
         Diffuse2D = diffuse;
         Specular2D = specular;
 
         gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
-        gl.BufferData<Vertex>(GLEnum.ArrayBuffer, VertexCount * (uint)sizeof(Vertex), vertices, GLEnum.StaticDraw);
+        gl.BufferData<Vertex>(GLEnum.ArrayBuffer, (uint)(Vertices.Length * sizeof(Vertex)), null, GLEnum.DynamicDraw);
         gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
         gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);
-        gl.BufferData<uint>(GLEnum.ElementArrayBuffer, IndexCount * sizeof(uint), indices, GLEnum.StaticDraw);
+        gl.BufferData<uint>(GLEnum.ElementArrayBuffer, (uint)(Indices.Length * sizeof(uint)), null, GLEnum.DynamicDraw);
         gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
+
+        UpdateVertices();
+        UpdateIndices();
     }
 
     public Mesh(GL gl, Vertex[] vertices, uint[] indices, Texture3D diffuse, Texture3D specular)
@@ -52,19 +55,36 @@ public unsafe class Mesh : IDisposable
         VBO = gl.GenBuffer();
         EBO = gl.GenBuffer();
 
-        VertexCount = (uint)vertices.Length;
-        IndexCount = (uint)indices.Length;
+        Vertices = vertices;
+        Indices = indices;
 
         Diffuse3D = diffuse;
         Specular3D = specular;
 
         gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
-        gl.BufferData<Vertex>(GLEnum.ArrayBuffer, VertexCount * (uint)sizeof(Vertex) * sizeof(float), vertices, GLEnum.StaticDraw);
+        gl.BufferData<Vertex>(GLEnum.ArrayBuffer, (uint)(Vertices.Length * sizeof(Vertex)), null, GLEnum.DynamicDraw);
         gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
         gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);
-        gl.BufferData<uint>(GLEnum.ElementArrayBuffer, IndexCount * sizeof(uint), indices, GLEnum.StaticDraw);
+        gl.BufferData<uint>(GLEnum.ElementArrayBuffer, (uint)(Indices.Length * sizeof(uint)), null, GLEnum.DynamicDraw);
         gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
+
+        UpdateVertices();
+        UpdateIndices();
+    }
+
+    public void UpdateVertices()
+    {
+        _gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
+        _gl.BufferSubData<Vertex>(GLEnum.ArrayBuffer, 0, (uint)(Vertices.Length * sizeof(Vertex)), Vertices);
+        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+    }
+
+    public void UpdateIndices()
+    {
+        _gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);
+        _gl.BufferSubData<uint>(GLEnum.ElementArrayBuffer, 0, (uint)(Indices.Length * sizeof(uint)), Indices);
+        _gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
     }
 
     public void Draw(uint position, uint? normal = null, uint? texCoords = null)
@@ -82,7 +102,7 @@ public unsafe class Mesh : IDisposable
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);
-        _gl.DrawElements(GLEnum.Triangles, VertexCount, GLEnum.UnsignedInt, (void*)0);
+        _gl.DrawElements(GLEnum.Triangles, (uint)Vertices.Length, GLEnum.UnsignedInt, (void*)0);
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
     }
 
