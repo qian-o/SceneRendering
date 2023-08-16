@@ -31,29 +31,30 @@ public static class ShaderHelper
     // texture-gaussian_blur.frag
     public const string GaussianBlur_RadiusUniform = "radius";
     public const string GaussianBlur_DeviationUniform = "deviation";
+    public const string GaussianBlur_NoiseIntensityUniform = "noiseIntensity";
 
     public static string GetMVP_VertexShader()
     {
         return @$"
 #version 320 es
 
-layout(location = 0) in vec3 {MVP_PositionAttrib};
-layout(location = 1) in vec3 {MVP_NormalAttrib};
-layout(location = 2) in vec2 {MVP_TexCoordsAttrib};
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 texCoords;
 
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
 
-uniform mat4 {MVP_ModelUniform};
-uniform mat4 {MVP_ViewUniform};
-uniform mat4 {MVP_ProjectionUniform};
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {{
-   gl_Position = {MVP_ProjectionUniform} * {MVP_ViewUniform} * {MVP_ModelUniform} * vec4({MVP_PositionAttrib}, 1.0);
-   Normal = mat3(transpose(inverse({MVP_ModelUniform}))) * {MVP_NormalAttrib};
-   FragPos = vec3({MVP_ModelUniform} * vec4({MVP_PositionAttrib}, 1.0));
-   TexCoords = {MVP_TexCoordsAttrib};
+   gl_Position = projection * view * model * vec4(position, 1.0);
+   Normal = mat3(transpose(inverse(model))) * normal;
+   FragPos = vec3(model * vec4(position, 1.0));
+   TexCoords = texCoords;
 }}
 ";
     }
@@ -69,10 +70,10 @@ in vec2 TexCoords;
 
 out vec4 FragColor;
 
-uniform sampler2D {Texture_TexUniform};
+uniform sampler2D tex;
 
 void main() {{
-    FragColor = vec4(texture({Texture_TexUniform}, TexCoords));
+    FragColor = vec4(texture(tex, TexCoords));
 }}
 ";
     }
@@ -133,11 +134,11 @@ in vec2 TexCoords;
 
 out vec4 FragColor;
 
-uniform vec3 {Lighting_ViewPosUniform};
-uniform Material {Lighting_MaterialUniform};
-uniform DirLight {Lighting_DirLightUniform};
-uniform PointLight {Lighting_PointLightsUniform}[NR_POINT_LIGHTS];
-uniform SpotLight {Lighting_SpotLightUniform};
+uniform vec3 viewPos;
+uniform Material material;
+uniform DirLight dirLight;
+uniform PointLight pointLights[NR_POINT_LIGHTS];
+uniform SpotLight spotLight;
 
 // function prototypes
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
@@ -147,15 +148,15 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main() {{
    // properties
    vec3 norm = normalize(Normal);
-   vec3 viewDir = normalize({Lighting_ViewPosUniform} - FragPos);
+   vec3 viewDir = normalize(viewPos - FragPos);
 
-   vec3 result = CalcDirLight({Lighting_DirLightUniform}, norm, viewDir);
+   vec3 result = CalcDirLight(dirLight, norm, viewDir);
 
    for(int i = 0; i < NR_POINT_LIGHTS; i++) {{
-      result += CalcPointLight({Lighting_PointLightsUniform}[i], norm, FragPos, viewDir);
+      result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
    }}
 
-   result += CalcSpotLight({Lighting_SpotLightUniform}, norm, FragPos, viewDir);
+   result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
    FragColor = vec4(result, 1.0);
 }}
@@ -169,12 +170,12 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {{
 
     // specular shading
    vec3 reflectDir = reflect(-lightDir, normal);
-   float spec = pow(max(dot(viewDir, reflectDir), 0.0), {Lighting_MaterialUniform}.shininess);
+   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     // combine results
-   vec3 ambient = light.ambient * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-   vec3 diffuse = light.diffuse * diff * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-   vec3 specular = light.specular * spec * vec3(texture({Lighting_MaterialUniform}.specular, TexCoords));
+   vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
+   vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+   vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
    return (ambient + diffuse + specular);
 }}
@@ -188,16 +189,16 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
     // specular shading
    vec3 reflectDir = reflect(-lightDir, normal);
-   float spec = pow(max(dot(viewDir, reflectDir), 0.0), {Lighting_MaterialUniform}.shininess);
+   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     // attenuation
    float distance = length(light.position - fragPos);
    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
 
     // combine results
-   vec3 ambient = light.ambient * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-   vec3 diffuse = light.diffuse * diff * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-   vec3 specular = light.specular * spec * vec3(texture({Lighting_MaterialUniform}.specular, TexCoords));
+   vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
+   vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+   vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
    ambient *= attenuation;
    diffuse *= attenuation;
@@ -214,7 +215,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), {Lighting_MaterialUniform}.shininess);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
@@ -223,9 +224,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float epsilon = light.cutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
     // combine results
-    vec3 ambient = light.ambient * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture({Lighting_MaterialUniform}.diffuse, TexCoords));
-    vec3 specular = light.specular * spec * vec3(texture({Lighting_MaterialUniform}.specular, TexCoords));
+    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;
@@ -239,16 +240,16 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
         return @$"
 #version 320 es
 
-layout(location = 0) in vec3 {Skybox_PositionAttrib};
+layout(location = 0) in vec3 position;
 
 out vec3 TexCoords;
 
-uniform mat4 {Skybox_ViewUniform};
-uniform mat4 {Skybox_ProjectionUniform};
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {{
-   gl_Position = ({Skybox_ProjectionUniform} * {Skybox_ViewUniform} * vec4({Skybox_PositionAttrib}, 1.0)).xyww;
-   TexCoords = {Skybox_PositionAttrib};
+   gl_Position = (projection * view * vec4(position, 1.0)).xyww;
+   TexCoords = position;
 }}
 ";
     }
@@ -264,10 +265,10 @@ in vec3 TexCoords;
 
 out vec4 FragColor;
 
-uniform samplerCube {Skybox_SkyboxUniform};
+uniform samplerCube skybox;
 
 void main() {{
-    FragColor = vec4(texture({Skybox_SkyboxUniform}, TexCoords));
+    FragColor = vec4(texture(skybox, TexCoords));
 }}
 ";
     }
@@ -286,6 +287,7 @@ out vec4 FragColor;
 uniform sampler2D tex;
 uniform int radius;
 uniform vec4 deviation;
+uniform float noiseIntensity;
 
 const float PI = 3.1415926;
 
@@ -307,11 +309,19 @@ void main() {{
     for(int i = -radius; i <= radius; i++) {{
         for(int j = -radius; j <= radius; j++) {{
             float weight = GetWeight(i);
+            totalWeight += weight;
 
             vec2 offset = vec2(1.0 / tex_offset.x * float(i), 1.0 / tex_offset.y * float(j));
-            result += texture(tex, TexCoords + offset) * weight;
 
-            totalWeight += weight;
+            vec4 noise = vec4(0.0, 0.0, 0.0, 1.0);
+            if(noiseIntensity > 0.0) {{
+                noise.r = fract(sin(dot(TexCoords + offset, vec2(12.9898, 78.233))) * 43758.5453);
+                noise.g = fract(sin(dot(TexCoords + offset, vec2(4.898, 7.23))) * 23421.631);
+                noise.b = fract(sin(dot(TexCoords + offset, vec2(53.23, 9.654))) * 12371.421);
+            }}
+            noise *= noiseIntensity;
+
+            result += (texture(tex, TexCoords + offset) + noise) * weight;
         }}
     }}
 
@@ -331,7 +341,7 @@ float GetWeight(int i) {{
         float totalWeight = 0.0f;
 
         float sigma = radius / 3.0f;
-        
+
         for (int i = 0; i < radius; i++)
         {
             totalWeight += 1.0f / (float)Math.Sqrt(2.0f * Math.PI * sigma * sigma) * (float)Math.Exp(-(float)(i * i) / (2.0f * sigma * sigma));

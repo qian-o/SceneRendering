@@ -28,8 +28,9 @@ public unsafe class GameWindow : Game
     private Plane gaussianBlurFilter = null!;
     #endregion
 
-    #region Colors
+    #region Gaussian Blur
     private Vector4D<float> deviation = new(0.0f);
+    private float noiseIntensity = 0.1f;
     #endregion
 
     protected override void Load()
@@ -174,6 +175,8 @@ public unsafe class GameWindow : Game
         deviation.Y = color.Y;
         deviation.Z = color.Z;
         deviation.W = color.W;
+
+        ImGui.DragFloat("Filter Noise Intensity", ref noiseIntensity, 0.01f, 0.0f, 1.0f);
     }
 
     private void GaussianBlurFilter(Program program)
@@ -194,6 +197,7 @@ public unsafe class GameWindow : Game
 
         program.SetUniform(ShaderHelper.GaussianBlur_RadiusUniform, 5);
         program.SetUniform(ShaderHelper.GaussianBlur_DeviationUniform, deviation);
+        program.SetUniform(ShaderHelper.GaussianBlur_NoiseIntensityUniform, noiseIntensity);
 
         gaussianBlurFilter.Draw(program);
 
