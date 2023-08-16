@@ -33,6 +33,15 @@ public static unsafe class TextureExtensions
         texture.FlushTexture(new Vector2D<uint>((uint)width, (uint)height), GLEnum.Rgba, GLEnum.UnsignedByte);
     }
 
+    public static void WriteFrame(this Texture2D texture, GL gl, int x, int y, int width, int height)
+    {
+        texture.AllocationBuffer((uint)(width * height * 4), out void* pboData);
+
+        gl.ReadPixels(x, y, (uint)width, (uint)height, GLEnum.Rgba, GLEnum.UnsignedByte, pboData);
+
+        texture.FlushTexture(new Vector2D<uint>((uint)width, (uint)height), GLEnum.Rgba, GLEnum.UnsignedByte);
+    }
+
     public static void WriteColor(this Texture2D texture, Color color)
     {
         WriteColor(texture, new Vector4D<byte>(color.R, color.G, color.B, color.A));

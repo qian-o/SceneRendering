@@ -6,7 +6,6 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using Plane = Core.Elements.Plane;
 using Program = Core.Tools.Program;
 using Shader = Core.Tools.Shader;
@@ -25,7 +24,8 @@ public unsafe class GameWindow : Game
     private Skybox skybox = null!;
     private Plane floor = null!;
     private Cube cube = null!;
-    private Plane gaussianBlurFilter = null!;
+    private Plane gaussianBlurFilter1 = null!;
+    private Plane gaussianBlurFilter2 = null!;
     #endregion
 
     #region Gaussian Blur
@@ -79,12 +79,20 @@ public unsafe class GameWindow : Game
         };
         floor.GetDiffuseTex().WriteImage("Resources/Textures/wood_floor.jpg");
 
-        gaussianBlurFilter = new Plane(gl);
+        gaussianBlurFilter1 = new Plane(gl)
+        {
+            Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(45.0f)) * Matrix4X4.CreateTranslation(0.0f, 1.505f, 1.5f)
+        };
+        gaussianBlurFilter1.GetDiffuseTex().WriteColor(Color.Transparent);
+
+        gaussianBlurFilter2 = new Plane(gl)
+        {
+            Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateScale(2.0f)
+        };
     }
 
     protected override void Update(double obj)
     {
-
     }
 
     protected override void Render(double obj)
@@ -135,9 +143,6 @@ public unsafe class GameWindow : Game
                 gl.StencilFunc(GLEnum.Always, 1, 0xFF);
                 gl.StencilMask(0xFF);
 
-                gaussianBlurFilter.Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(45.0f)) * Matrix4X4.CreateTranslation(0.0f, 1.505f, 1.5f);
-                gaussianBlurFilter.GetDiffuseTex().WriteColor(Color.Transparent);
-
                 textureProgram.Enable();
                 textureProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
                 textureProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
@@ -146,7 +151,7 @@ public unsafe class GameWindow : Game
                 textureProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
                 textureProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
 
-                gaussianBlurFilter.Draw(textureProgram);
+                gaussianBlurFilter1.Draw(textureProgram);
 
                 textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
                 textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
@@ -157,7 +162,6 @@ public unsafe class GameWindow : Game
             gl.StencilFunc(GLEnum.Equal, 1, 0xFF);
             gl.StencilMask(0x00);
 
-            gaussianBlurFilter.Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateScale(2.0f);
             GaussianBlurFilter(gaussianBlurProgram);
 
             gl.StencilMask(0xFF);
@@ -181,11 +185,7 @@ public unsafe class GameWindow : Game
 
     private void GaussianBlurFilter(Program program)
     {
-        byte* image = gl.GetFrameBufferImage(Width, Height);
-
-        gaussianBlurFilter.GetDiffuseTex().WriteImage(image, Width, Height);
-
-        Marshal.FreeHGlobal((IntPtr)image);
+        gaussianBlurFilter2.GetDiffuseTex().WriteFrame(gl, 0, 0, Width, Height);
 
         program.Enable();
         program.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
@@ -199,7 +199,7 @@ public unsafe class GameWindow : Game
         program.SetUniform(ShaderHelper.GaussianBlur_DeviationUniform, deviation);
         program.SetUniform(ShaderHelper.GaussianBlur_NoiseIntensityUniform, noiseIntensity);
 
-        gaussianBlurFilter.Draw(program);
+        gaussianBlurFilter2.Draw(program);
 
         program.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
         program.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
