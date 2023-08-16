@@ -32,6 +32,10 @@ public abstract class Game
     protected float cameraSensitivity = 0.2f;
     #endregion
 
+    public int Width => _window.Size.X;
+
+    public int Height => _window.Size.Y;
+
     public Game()
     {
         _fpsSample = new List<double>();
@@ -147,6 +151,8 @@ public abstract class Game
             ImGui.DragFloat("Camera Speed", ref cameraSpeed, 0.5f, 0.5f, 20.0f);
             ImGui.DragFloat("Camera Sensitivity", ref cameraSensitivity, 0.2f, 0.2f, 10.0f);
 
+            RenderImGui(obj);
+
             imGuiController.Render();
         };
         _window.Closing += Closing;
@@ -165,6 +171,8 @@ public abstract class Game
     protected virtual void Update(double obj) { }
 
     protected virtual void Render(double obj) { }
+
+    protected virtual void RenderImGui(double obj) { }
 
     protected virtual void Closing() { }
 }

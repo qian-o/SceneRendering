@@ -30,7 +30,7 @@ public static class ShaderHelper
 
     // texture-gaussian_blur.frag
     public const string GaussianBlur_RadiusUniform = "radius";
-    public const string GaussianBlur_TotalWeightUniform = "totalWeight";
+    public const string GaussianBlur_DeviationUniform = "deviation";
 
     public static string GetMVP_VertexShader()
     {
@@ -272,10 +272,8 @@ void main() {{
 ";
     }
 
-    public static string GetGaussianBlur_FragmentShader(bool horizontal = true)
+    public static string GetGaussianBlur_FragmentShader()
     {
-        string formula = horizontal ? @$"vec2(1.0 / float(tex_offset.x) * float(i), 0.0)" : @$"vec2(0.0, 1.0 / float(tex_offset.y) * float(i))";
-
         return @$"
 #version 320 es
 
@@ -287,31 +285,37 @@ out vec4 FragColor;
 
 uniform sampler2D tex;
 uniform int radius;
+uniform vec4 deviation;
 
-// PI
 const float PI = 3.1415926;
 
 float GetWeight(int i);
 
 void main() {{
-    vec4 color = vec4(texture(tex, TexCoords));
-
     if(radius <= 1) {{
-        FragColor = color;
+        FragColor = vec4(texture(tex, TexCoords));
 
         return;
     }}
 
-    ivec2 tex_offset = textureSize(tex, 0);
+    ivec2 tex_offset_i = textureSize(tex, 0);
+    vec2 tex_offset = vec2(float(tex_offset_i.x), float(tex_offset_i.y));
 
-    vec3 result = color.rgb * GetWeight(0);
+    vec4 result = vec4(0.0);
+    float totalWeight = 0.0;
 
-    for(int i = 1; i < radius; ++i) {{
-        result += texture(tex, TexCoords + {formula}).rgb * GetWeight(i);
-        result += texture(tex, TexCoords - {formula}).rgb * GetWeight(i);
+    for(int i = -radius; i <= radius; i++) {{
+        for(int j = -radius; j <= radius; j++) {{
+            float weight = GetWeight(i);
+
+            vec2 offset = vec2(1.0 / tex_offset.x * float(i), 1.0 / tex_offset.y * float(j));
+            result += texture(tex, TexCoords + offset) * weight;
+
+            totalWeight += weight;
+        }}
     }}
 
-    FragColor = vec4(result, color.a);
+    FragColor = result / totalWeight + deviation;
 }}
 
 float GetWeight(int i) {{
