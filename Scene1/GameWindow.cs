@@ -24,6 +24,7 @@ public unsafe class GameWindow : Game
     private Skybox skybox = null!;
     private Plane floor = null!;
     private Cube cube = null!;
+    private Custom kafka = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
     #endregion
@@ -67,21 +68,26 @@ public unsafe class GameWindow : Game
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 4, "Resources/Textures/skybox/front.jpg");
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 5, "Resources/Textures/skybox/back.jpg");
 
-        cube = new Cube(gl)
-        {
-            Transform = Matrix4X4.CreateTranslation(0.0f, 0.505f, 0.0f)
-        };
-        cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
-
         floor = new Plane(gl, new Vector2D<float>(500.0f))
         {
             Transform = Matrix4X4.CreateScale(1000.0f)
         };
         floor.GetDiffuseTex().WriteImage("Resources/Textures/wood_floor.jpg");
 
+        cube = new Cube(gl)
+        {
+            Transform = Matrix4X4.CreateTranslation(0.0f, 0.505f, 0.0f)
+        };
+        cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
+
+        kafka = new Custom(gl, "Resources/Models/星穹铁道—卡芙卡无外套/kafka.obj")
+        {
+            Transform = Matrix4X4.CreateTranslation(0.0f, 0.005f, -5.0f)
+        };
+
         gaussianBlurFilter1 = new Plane(gl)
         {
-            Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(45.0f)) * Matrix4X4.CreateTranslation(0.0f, 1.505f, 1.5f)
+            Transform = Matrix4X4.CreateScale(new Vector3D<float>(2.0f, 1.0f, 1.0f)) * Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(45.0f)) * Matrix4X4.CreateTranslation(0.0f, 1.505f, 1.5f)
         };
         gaussianBlurFilter1.GetDiffuseTex().WriteColor(Color.Transparent);
 
@@ -129,6 +135,8 @@ public unsafe class GameWindow : Game
 
             cube.Draw(textureProgram);
 
+            kafka.Draw(textureProgram);
+
             textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
@@ -137,35 +145,7 @@ public unsafe class GameWindow : Game
 
         // 滤镜
         {
-            {
-                gl.Clear(ClearBufferMask.StencilBufferBit);
-
-                gl.StencilFunc(GLEnum.Always, 1, 0xFF);
-                gl.StencilMask(0xFF);
-
-                textureProgram.Enable();
-                textureProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
-                textureProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
-                textureProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
-
-                textureProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
-                textureProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
-
-                gaussianBlurFilter1.Draw(textureProgram);
-
-                textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
-                textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
-                textureProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
-                textureProgram.Disable();
-            }
-
-            gl.StencilFunc(GLEnum.Equal, 1, 0xFF);
-            gl.StencilMask(0x00);
-
-            GaussianBlurFilter(gaussianBlurProgram);
-
-            gl.StencilMask(0xFF);
-            gl.StencilFunc(GLEnum.Always, 0, 0xFF);
+            GaussianBlurFilter();
         }
     }
 
@@ -183,27 +163,57 @@ public unsafe class GameWindow : Game
         ImGui.DragFloat("Filter Noise Intensity", ref noiseIntensity, 0.01f, 0.0f, 1.0f);
     }
 
-    private void GaussianBlurFilter(Program program)
+    private void GaussianBlurFilter()
     {
-        gaussianBlurFilter2.GetDiffuseTex().WriteFrame(gl, 0, 0, Width, Height);
+        gl.Clear(ClearBufferMask.StencilBufferBit);
 
-        program.Enable();
-        program.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
-        program.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
-        program.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+        gl.StencilFunc(GLEnum.Always, 1, 0xFF);
+        gl.StencilMask(0xFF);
 
-        program.SetUniform(ShaderHelper.MVP_ViewUniform, Matrix4X4<float>.Identity);
-        program.SetUniform(ShaderHelper.MVP_ProjectionUniform, Matrix4X4<float>.Identity);
+        {
+            textureProgram.Enable();
+            textureProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
+            textureProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
+            textureProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
 
-        program.SetUniform(ShaderHelper.GaussianBlur_RadiusUniform, 5);
-        program.SetUniform(ShaderHelper.GaussianBlur_DeviationUniform, deviation);
-        program.SetUniform(ShaderHelper.GaussianBlur_NoiseIntensityUniform, noiseIntensity);
+            textureProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
+            textureProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
 
-        gaussianBlurFilter2.Draw(program);
+            gaussianBlurFilter1.Draw(textureProgram);
 
-        program.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
-        program.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
-        program.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
-        program.Disable();
+            textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
+            textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
+            textureProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+            textureProgram.Disable();
+        }
+
+        gl.StencilFunc(GLEnum.Equal, 1, 0xFF);
+        gl.StencilMask(0x00);
+
+        {
+            gaussianBlurFilter2.GetDiffuseTex().WriteFrame(gl, 0, 0, Width, Height);
+
+            gaussianBlurProgram.Enable();
+            gaussianBlurProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
+            gaussianBlurProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
+            gaussianBlurProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+
+            gaussianBlurProgram.SetUniform(ShaderHelper.MVP_ViewUniform, Matrix4X4<float>.Identity);
+            gaussianBlurProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, Matrix4X4<float>.Identity);
+
+            gaussianBlurProgram.SetUniform(ShaderHelper.GaussianBlur_RadiusUniform, 5);
+            gaussianBlurProgram.SetUniform(ShaderHelper.GaussianBlur_DeviationUniform, deviation);
+            gaussianBlurProgram.SetUniform(ShaderHelper.GaussianBlur_NoiseIntensityUniform, noiseIntensity);
+
+            gaussianBlurFilter2.Draw(gaussianBlurProgram);
+
+            gaussianBlurProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
+            gaussianBlurProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
+            gaussianBlurProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+            gaussianBlurProgram.Disable();
+        }
+
+        gl.StencilMask(0xFF);
+        gl.StencilFunc(GLEnum.Always, 0, 0xFF);
     }
 }
