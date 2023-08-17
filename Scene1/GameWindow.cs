@@ -25,6 +25,7 @@ public unsafe class GameWindow : Game
     private Plane floor = null!;
     private Cube cube = null!;
     private Custom kafka = null!;
+    private Custom ark = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
     #endregion
@@ -80,9 +81,14 @@ public unsafe class GameWindow : Game
         };
         cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
 
-        kafka = new Custom(gl, "Resources/Models/星穹铁道—卡芙卡无外套/kafka.obj")
+        kafka = new Custom(gl, @"Resources/Models/星穹铁道—卡芙卡无外套/kafka.obj")
         {
             Transform = Matrix4X4.CreateTranslation(0.0f, 0.005f, -5.0f)
+        };
+
+        ark = new Custom(gl, "Resources/Models/Ark/Ark.obj")
+        {
+            Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
         gaussianBlurFilter1 = new Plane(gl)
@@ -136,6 +142,8 @@ public unsafe class GameWindow : Game
             cube.Draw(textureProgram);
 
             kafka.Draw(textureProgram);
+
+            ark.Draw(textureProgram);
 
             textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);

@@ -1,0 +1,24 @@
+# Blender 3.6.0 MTL File: 'ARK.blend'
+# www.blender.org
+
+newmtl Material_001
+Ns 490.000000
+Ka 0.600000 0.600000 0.600000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd env_vig_autobotark_color_normx.png
+map_Ke env_vig_autobotark_e.png
+map_Bump -bm 1.500000 env_vig_autobotark_norm.png
+
+newmtl Material_002
+Ns 39.999996
+Ka 0.600000 0.600000 0.600000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd env_vig_autobotarkengine_color_normx.png
+map_Ke env_vig_autobotarkengine_e_00_00_00.png
+map_Bump -bm 1.500000 env_vig_autobotarkengine_norm_00_00_00.png

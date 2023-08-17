@@ -102,7 +102,7 @@ public unsafe class Mesh : IDisposable
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, EBO);
-        _gl.DrawElements(GLEnum.Triangles, (uint)Vertices.Length, GLEnum.UnsignedInt, (void*)0);
+        _gl.DrawElements(GLEnum.Triangles, (uint)Indices.Length, GLEnum.UnsignedInt, (void*)0);
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
     }
 
