@@ -29,6 +29,11 @@ public unsafe class Custom : BaseElement
 
         Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
 
+        if (path.Contains("fbx"))
+        {
+
+        }
+
         ProcessNode(scene->MRootNode, scene, meshes);
 
         Meshes = meshes.ToArray();

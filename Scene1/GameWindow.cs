@@ -26,6 +26,7 @@ public unsafe class GameWindow : Game
     private Cube cube = null!;
     private Custom kafka = null!;
     private Custom ark = null!;
+    private Custom animationTest = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
     #endregion
@@ -91,6 +92,8 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
+        animationTest = new Custom(gl, @"C:\Users\13247\Desktop\测试动画.fbx");
+
         gaussianBlurFilter1 = new Plane(gl)
         {
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(2.0f, 1.0f, 1.0f)) * Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(45.0f)) * Matrix4X4.CreateTranslation(0.0f, 1.505f, 1.5f)
@@ -144,6 +147,8 @@ public unsafe class GameWindow : Game
             kafka.Draw(textureProgram);
 
             ark.Draw(textureProgram);
+
+            animationTest.Draw(textureProgram);
 
             textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
