@@ -90,14 +90,14 @@ public unsafe class Mesh : IDisposable
     public void Draw(uint position, uint? normal = null, uint? texCoords = null)
     {
         _gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
-        _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, 8 * sizeof(float), (void*)0);
+        _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)0);
         if (normal != null)
         {
-            _gl.VertexAttribPointer(normal.Value, 3, GLEnum.Float, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+            _gl.VertexAttribPointer(normal.Value, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(3 * sizeof(float)));
         }
         if (texCoords != null)
         {
-            _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+            _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(6 * sizeof(float)));
         }
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 

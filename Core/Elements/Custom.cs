@@ -5,6 +5,7 @@ using Core.Tools;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
+using System.Runtime.InteropServices;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
 using CoreMesh = Core.Models.Mesh;
@@ -17,6 +18,7 @@ public unsafe class Custom : BaseElement
     private readonly Assimp _assimp;
     private readonly string _directory;
     private readonly Dictionary<string, Texture2D> _cache;
+    private readonly Dictionary<string, BoneData> _boneDatas;
 
     public override CoreMesh[] Meshes { get; }
 
@@ -25,6 +27,8 @@ public unsafe class Custom : BaseElement
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
+        _boneDatas = new();
+
         List<CoreMesh> meshes = new();
 
         Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
@@ -112,6 +116,38 @@ public unsafe class Custom : BaseElement
             }
 
             vertices.Add(vertex);
+        }
+
+        for (uint i = 0; i < mesh->MNumBones; i++)
+        {
+            Bone* bone = mesh->MBones[i];
+
+            string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
+
+            if (!_boneDatas.TryGetValue(name, out BoneData boneData))
+            {
+                boneData = new BoneData(_boneDatas.Count, bone->MOffsetMatrix.Convert<float>());
+
+                _boneDatas.Add(name, boneData);
+            }
+
+            for (uint j = 0; j < bone->MNumWeights; j++)
+            {
+                Vertex vertex = vertices[(int)bone->MWeights[j].MVertexId];
+
+                for (int k = 0; k < 4; k++)
+                {
+                    if (vertex.BoneWeights[k] == 0.0f)
+                    {
+                        vertex.BoneIds[k] = boneData.Id;
+                        vertex.BoneWeights[k] = bone->MWeights[j].MWeight;
+
+                        break;
+                    }
+                }
+
+                vertices[(int)bone->MWeights[j].MVertexId] = vertex;
+            }
         }
 
         for (uint i = 0; i < mesh->MNumFaces; i++)
