@@ -94,7 +94,7 @@ public unsafe class GameWindow : Game
 
         animationTest = new Custom(gl, "Resources/Models/测试动画.fbx")
         {
-            Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateTranslation(10.0f, 5.0f, 10.0f)
+            Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(10.0f, 2.0f, 10.0f)
         };
 
         gaussianBlurFilter1 = new Plane(gl)
