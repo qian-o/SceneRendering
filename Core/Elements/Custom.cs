@@ -86,7 +86,7 @@ public unsafe class Custom : BaseElement
         for (uint i = 0; i < node->MNumMeshes; i++)
         {
             AssimpMesh* mesh = scene->MMeshes[node->MMeshes[i]];
-            meshes.Add(ProcessMesh(mesh, scene));
+            meshes.Add(ProcessMesh(node->MTransformation.Convert<float>(), mesh, scene));
         }
 
         for (uint i = 0; i < node->MNumChildren; i++)
@@ -95,7 +95,7 @@ public unsafe class Custom : BaseElement
         }
     }
 
-    private CoreMesh ProcessMesh(AssimpMesh* mesh, Scene* scene)
+    private CoreMesh ProcessMesh(Matrix4X4<float> transformation, AssimpMesh* mesh, Scene* scene)
     {
         List<Vertex> vertices = new();
         List<uint> indices = new();
@@ -109,6 +109,8 @@ public unsafe class Custom : BaseElement
                 Position = new Vector3D<float>(mesh->MVertices[i].X, mesh->MVertices[i].Y, mesh->MVertices[i].Z),
                 Normal = new Vector3D<float>(mesh->MNormals[i].X, mesh->MNormals[i].Y, mesh->MNormals[i].Z)
             };
+
+            vertex.Position = Vector3D.Transform(vertex.Position, transformation);
 
             if (mesh->MTextureCoords[0] != null)
             {
