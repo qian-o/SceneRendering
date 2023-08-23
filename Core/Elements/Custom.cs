@@ -5,6 +5,7 @@ using Core.Tools;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
@@ -31,7 +32,7 @@ public unsafe class Custom : BaseElement
 
         List<CoreMesh> meshes = new();
 
-        Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.PreTransformVertices));
+        Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
 
         if (path.Contains("fbx"))
         {
@@ -178,7 +179,7 @@ public unsafe class Custom : BaseElement
         if (diffuse == null)
         {
             diffuse = new Texture2D(_gl, GLEnum.Rgba, GLEnum.UnsignedByte);
-            diffuse.WriteColor(new Vector3D<byte>(0));
+            diffuse.WriteLinearColor(new Color[] { Color.Blue, Color.Red }, new PointF(0.0f, 0.0f), new PointF(1.0f, 1.0f));
         }
 
         if (specular == null)

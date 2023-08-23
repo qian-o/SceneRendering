@@ -10,15 +10,13 @@ public static unsafe class TextureExtensions
 {
     public static void WriteImage(this Texture2D texture, string file)
     {
-        SKImage image = SKImage.FromEncodedData(file);
+        using SKImage image = SKImage.FromEncodedData(file);
 
         texture.AllocationBuffer((uint)(image.Width * image.Height * 4), out void* pboData);
 
         image.ReadPixels(new SKImageInfo(image.Width, image.Height, SKColorType.Rgba8888), (nint)pboData, image.Width * 4, 0, 0);
 
         texture.FlushTexture(new Vector2D<uint>((uint)image.Width, (uint)image.Height), GLEnum.Rgba, GLEnum.UnsignedByte);
-
-        image.Dispose();
     }
 
     public static void WriteImage(this Texture2D texture, byte* image, int width, int height)
@@ -40,6 +38,24 @@ public static unsafe class TextureExtensions
         gl.ReadPixels(x, y, (uint)width, (uint)height, GLEnum.Rgba, GLEnum.UnsignedByte, pboData);
 
         texture.FlushTexture(new Vector2D<uint>((uint)width, (uint)height), GLEnum.Rgba, GLEnum.UnsignedByte);
+    }
+
+    public static void WriteLinearColor(this Texture2D texture, Color[] colors, PointF begin, PointF end)
+    {
+        texture.AllocationBuffer(1024 * 1024 * 4, out void* pboData);
+
+        using SKSurface surface = SKSurface.Create(new SKImageInfo(1024, 1024, SKColorType.Rgba8888), (nint)pboData);
+
+        using SKPaint paint = new()
+        {
+            IsAntialias = true,
+            IsDither = true,
+            FilterQuality = SKFilterQuality.High,
+            Shader = SKShader.CreateLinearGradient(new SKPoint(begin.X * 1024, begin.Y * 1024), new SKPoint(end.X * 1024, end.Y * 1024), colors.Select(c => new SKColor(c.R, c.G, c.B, c.A)).ToArray(), null, SKShaderTileMode.Repeat)
+        };
+        surface.Canvas.DrawRect(0, 0, 1024, 1024, paint);
+
+        texture.FlushTexture(new Vector2D<uint>(1024, 1024), GLEnum.Rgba, GLEnum.UnsignedByte);
     }
 
     public static void WriteColor(this Texture2D texture, Color color)
@@ -65,15 +81,13 @@ public static unsafe class TextureExtensions
 
     public static void WriteImage(this Texture3D texture, GLEnum target, string file)
     {
-        SKImage image = SKImage.FromEncodedData(file);
+        using SKImage image = SKImage.FromEncodedData(file);
 
         texture.AllocationBuffer((uint)(image.Width * image.Height * 4), out nint pboData);
 
         image.ReadPixels(new SKImageInfo(image.Width, image.Height, SKColorType.Rgba8888), pboData, image.Width * 4, 0, 0);
 
         texture.FlushTexture(new Vector2D<uint>((uint)image.Width, (uint)image.Height), target, GLEnum.Rgba, GLEnum.UnsignedByte);
-
-        image.Dispose();
     }
 
     public static void WriteColor(this Texture3D texture, GLEnum target, Color color)
