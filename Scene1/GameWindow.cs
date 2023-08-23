@@ -97,7 +97,7 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
-        animationTest = new Custom(gl, "Resources/Models/测试动画.fbx")
+        animationTest = new Custom(gl, "Resources/Models/不规则形状.fbx")
         {
             Transform = Matrix4X4.CreateTranslation(10.0f, 2.0f, 10.0f)
         };

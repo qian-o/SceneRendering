@@ -370,21 +370,27 @@ void main() {{
     vec4 totalPosition = vec4(0.0);
     vec3 totalNormal = vec3(0.0);
 
-    for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {{
+    if(boneIds[0] == -1) {{
+        totalPosition = vec4(position, 1.0);
+        totalNormal = normal;
+    }} else {{
+        for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {{
 
-        if(boneIds[i] == -1)
-            continue;
+            if(boneIds[i] == -1)
+                continue;
 
-        if(boneIds[i] >= MAX_BONES) {{
-            totalPosition = vec4(position, 1.0);
-            break;
+            if(boneIds[i] >= MAX_BONES) {{
+                totalPosition = vec4(position, 1.0);
+                break;
+            }}
+
+            vec4 localPosition = boneTransforms[boneIds[i]] * vec4(position, 1.0);
+            totalPosition += localPosition * weights[i];
+
+            vec3 localNormal = mat3(boneTransforms[boneIds[i]]) * normal;
+            totalNormal += localNormal * weights[i];
         }}
 
-        vec4 localPosition = boneTransforms[boneIds[i]] * vec4(position, 1.0);
-        totalPosition += localPosition * weights[i];
-
-        vec3 localNormal = mat3(boneTransforms[boneIds[i]]) * normal;
-        totalNormal += localNormal * weights[i];
     }}
 
     gl_Position = projection * view * model * totalPosition;

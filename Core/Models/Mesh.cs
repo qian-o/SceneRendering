@@ -1,5 +1,7 @@
-﻿using Core.Tools;
+﻿using Core.Helpers;
+using Core.Tools;
 using Silk.NET.OpenGLES;
+using System.Runtime.InteropServices;
 
 namespace Core.Models;
 
@@ -90,22 +92,22 @@ public unsafe class Mesh : IDisposable
     public void Draw(uint position, uint? normal = null, uint? texCoords = null, uint? boneIds = null, uint? weights = null)
     {
         _gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
-        _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)0);
+        _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)Marshal.OffsetOf<Vertex>(nameof(Vertex.Position)));
         if (normal != null)
         {
-            _gl.VertexAttribPointer(normal.Value, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(3 * sizeof(float)));
+            _gl.VertexAttribPointer(normal.Value, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)Marshal.OffsetOf<Vertex>(nameof(Vertex.Normal)));
         }
         if (texCoords != null)
         {
-            _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(6 * sizeof(float)));
+            _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)Marshal.OffsetOf<Vertex>(nameof(Vertex.TexCoords)));
         }
         if (boneIds != null)
         {
-            _gl.VertexAttribPointer(boneIds.Value, 4, GLEnum.Int, false, (uint)sizeof(Vertex), (void*)(8 * sizeof(float)));
+            _gl.VertexAttribIPointer(boneIds.Value, ShaderHelper.MAX_BONE_INFLUENCE, GLEnum.Int, (uint)sizeof(Vertex), (void*)Marshal.OffsetOf<Vertex>(nameof(Vertex.BoneIds)));
         }
         if (weights != null)
         {
-            _gl.VertexAttribPointer(weights.Value, 4, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(12 * sizeof(float)));
+            _gl.VertexAttribPointer(weights.Value, ShaderHelper.MAX_BONE_INFLUENCE, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)Marshal.OffsetOf<Vertex>(nameof(Vertex.BoneWeights)));
         }
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
