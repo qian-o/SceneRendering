@@ -171,6 +171,17 @@ public unsafe class Program : IDisposable
         _gl.UniformMatrix4(GetUniform(name), 1, false, (float*)&data);
     }
 
+    public void SetUniform(string name, IEnumerable<Matrix4X4<float>> data)
+    {
+        Enable();
+
+        int index = 0;
+        foreach (Matrix4X4<float> matrix in data)
+        {
+            _gl.UniformMatrix4(GetUniform($"{name}[{index++}]"), 1, false, (float*)&matrix);
+        }
+    }
+
     public void SetUniform(string name, IStructure structure)
     {
         Enable();

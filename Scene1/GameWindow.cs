@@ -18,6 +18,7 @@ public unsafe class GameWindow : Game
     private Program skyboxProgram = null!;
     private Program textureProgram = null!;
     private Program gaussianBlurProgram = null!;
+    private Program boneProgram = null!;
     #endregion
 
     #region Elements
@@ -51,6 +52,7 @@ public unsafe class GameWindow : Game
         using Shader mvpVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetMVP_VertexShader());
         using Shader textureFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTexture_FragmentShader());
         using Shader gaussianBlurFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetGaussianBlur_FragmentShader());
+        using Shader boneVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetBone_VertexShader());
 
         skyboxProgram = new Program(gl);
         skyboxProgram.Attach(skyboxVertex, skyboxFragment);
@@ -60,6 +62,9 @@ public unsafe class GameWindow : Game
 
         gaussianBlurProgram = new Program(gl);
         gaussianBlurProgram.Attach(mvpVertex, gaussianBlurFragment);
+
+        boneProgram = new Program(gl);
+        boneProgram.Attach(boneVertex, textureFragment);
 
         skybox = new Skybox(gl);
 
@@ -151,12 +156,29 @@ public unsafe class GameWindow : Game
 
             ark.Draw(textureProgram);
 
-            animationTest.Draw(textureProgram);
-
             textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
             textureProgram.Disable();
+
+            boneProgram.Enable();
+            boneProgram.EnableAttrib(ShaderHelper.MVP_PositionAttrib);
+            boneProgram.EnableAttrib(ShaderHelper.MVP_NormalAttrib);
+            boneProgram.EnableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+            boneProgram.EnableAttrib(ShaderHelper.Bone_BoneIdsAttrib);
+            boneProgram.EnableAttrib(ShaderHelper.Bone_WeightsAttrib);
+
+            boneProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
+            boneProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
+
+            animationTest.Draw(boneProgram);
+
+            boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
+            boneProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
+            boneProgram.DisableAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+            boneProgram.DisableAttrib(ShaderHelper.Bone_BoneIdsAttrib);
+            boneProgram.DisableAttrib(ShaderHelper.Bone_WeightsAttrib);
+            boneProgram.Disable();
         }
 
         // 滤镜

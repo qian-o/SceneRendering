@@ -7,7 +7,9 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using AssimpAnimation = Silk.NET.Assimp.Animation;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
+using CoreAnimation = Core.Models.Animation;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
 using CoreMesh = Core.Models.Mesh;
 using Program = Core.Tools.Program;
@@ -19,9 +21,12 @@ public unsafe class Custom : BaseElement
     private readonly Assimp _assimp;
     private readonly string _directory;
     private readonly Dictionary<string, Texture2D> _cache;
-    private readonly Dictionary<string, BoneData> _boneDatas;
+    private readonly List<BoneData> _boneDatas;
+    private readonly Matrix4X4<float>[] _boneMatrices;
 
     public override CoreMesh[] Meshes { get; }
+
+    public CoreAnimation[] Animations { get; }
 
     public Custom(GL gl, string path) : base(gl)
     {
@@ -29,30 +34,40 @@ public unsafe class Custom : BaseElement
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
         _boneDatas = new();
+        _boneMatrices = new Matrix4X4<float>[ShaderHelper.Max_Bones];
 
         List<CoreMesh> meshes = new();
+        List<CoreAnimation> animations = new();
 
         Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
 
-        if (path.Contains("fbx"))
-        {
-
-        }
-
         ProcessNode(scene->MRootNode, scene, meshes);
+        ProcessAnimation(scene, animations);
 
         Meshes = meshes.ToArray();
+        Animations = animations.ToArray();
     }
 
     public override void Draw(Program program)
     {
         bool anyMaterial = program.GetUniform(ShaderHelper.Lighting_MaterialUniform) >= 0;
+        bool anyBones = program.GetUniform(ShaderHelper.Bone_BoneTransformsUniform) >= 0;
 
         uint position = (uint)program.GetAttrib(ShaderHelper.MVP_PositionAttrib);
         uint normal = (uint)program.GetAttrib(ShaderHelper.MVP_NormalAttrib);
         uint texCoords = (uint)program.GetAttrib(ShaderHelper.MVP_TexCoordsAttrib);
+        uint? boneIds = null;
+        uint? weights = null;
 
         program.SetUniform(ShaderHelper.MVP_ModelUniform, Transform);
+
+        if (anyBones)
+        {
+            boneIds = (uint)program.GetAttrib(ShaderHelper.Bone_BoneIdsAttrib);
+            weights = (uint)program.GetAttrib(ShaderHelper.Bone_WeightsAttrib);
+
+            program.SetUniform(ShaderHelper.Bone_BoneTransformsUniform, _boneMatrices);
+        }
 
         foreach (CoreMesh mesh in Meshes)
         {
@@ -78,7 +93,7 @@ public unsafe class Custom : BaseElement
                 program.SetUniform(ShaderHelper.Texture_TexUniform, 0);
             }
 
-            mesh.Draw(position, normal, texCoords);
+            mesh.Draw(position, normal, texCoords, boneIds, weights);
         }
     }
 
@@ -125,11 +140,11 @@ public unsafe class Custom : BaseElement
 
             string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
 
-            if (!_boneDatas.TryGetValue(name, out BoneData boneData))
+            if (_boneDatas.Find(item => item.Name == name) is not BoneData boneData)
             {
-                boneData = new BoneData(_boneDatas.Count, bone->MOffsetMatrix.Convert<float>());
+                boneData = new BoneData(_boneDatas.Count, name, bone->MOffsetMatrix.Convert<float>());
 
-                _boneDatas.Add(name, boneData);
+                _boneDatas.Add(boneData);
             }
 
             for (uint j = 0; j < bone->MNumWeights; j++)
@@ -213,5 +228,32 @@ public unsafe class Custom : BaseElement
         }
 
         return materialTextures;
+    }
+
+    private void ProcessAnimation(Scene* scene, List<CoreAnimation> animations)
+    {
+        foreach (BoneData bone in _boneDatas)
+        {
+            _boneMatrices[bone.Id] = bone.Offset;
+        }
+
+        for (int i = 0; i < scene->MNumAnimations; i++)
+        {
+            AssimpAnimation* animation = scene->MAnimations[i];
+
+            List<AnimationNode> nodes = new();
+            for (int j = 0; j < animation->MNumChannels; j++)
+            {
+                NodeAnim* node = animation->MChannels[j];
+
+                Vector3D<float> position = new(node->MPositionKeys->MValue.X, node->MPositionKeys->MValue.Y, node->MPositionKeys->MValue.Z);
+                Quaternion<float> rotation = new(node->MRotationKeys->MValue.X, node->MRotationKeys->MValue.Y, node->MRotationKeys->MValue.Z, node->MRotationKeys->MValue.W);
+                Vector3D<float> scale = new(node->MScalingKeys->MValue.X, node->MScalingKeys->MValue.Y, node->MScalingKeys->MValue.Z);
+
+                nodes.Add(new AnimationNode(node->MNodeName.AsString, position, rotation, scale));
+            }
+
+            animations.Add(new CoreAnimation(animation->MName.AsString, animation->MDuration, animation->MTicksPerSecond, nodes.ToArray()));
+        }
     }
 }

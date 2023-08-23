@@ -87,7 +87,7 @@ public unsafe class Mesh : IDisposable
         _gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
     }
 
-    public void Draw(uint position, uint? normal = null, uint? texCoords = null)
+    public void Draw(uint position, uint? normal = null, uint? texCoords = null, uint? boneIds = null, uint? weights = null)
     {
         _gl.BindBuffer(GLEnum.ArrayBuffer, VBO);
         _gl.VertexAttribPointer(position, 3, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)0);
@@ -98,6 +98,14 @@ public unsafe class Mesh : IDisposable
         if (texCoords != null)
         {
             _gl.VertexAttribPointer(texCoords.Value, 2, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(6 * sizeof(float)));
+        }
+        if (boneIds != null)
+        {
+            _gl.VertexAttribPointer(boneIds.Value, 4, GLEnum.Int, false, (uint)sizeof(Vertex), (void*)(8 * sizeof(float)));
+        }
+        if (weights != null)
+        {
+            _gl.VertexAttribPointer(weights.Value, 4, GLEnum.Float, false, (uint)sizeof(Vertex), (void*)(12 * sizeof(float)));
         }
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 

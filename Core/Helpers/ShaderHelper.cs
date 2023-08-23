@@ -33,6 +33,12 @@ public static class ShaderHelper
     public const string GaussianBlur_DeviationUniform = "deviation";
     public const string GaussianBlur_NoiseIntensityUniform = "noiseIntensity";
 
+    // mvp-bone.vert
+    public const int Max_Bones = 200;
+    public const string Bone_BoneIdsAttrib = "boneIds";
+    public const string Bone_WeightsAttrib = "weights";
+    public const string Bone_BoneTransformsUniform = "boneTransforms";
+
     public static string GetMVP_VertexShader()
     {
         return @$"
@@ -78,7 +84,7 @@ void main() {{
 ";
     }
 
-    public static string GetLighting_FragmentShader(int pointLights)
+    public static string GetLighting_FragmentShader(uint pointLights)
     {
         return @$"
 #version 320 es
@@ -332,6 +338,46 @@ float GetWeight(int i) {{
     float sigma = float(radius) / 3.0;
 
     return (1.0 / sqrt(2.0 * PI * sigma * sigma)) * exp(-float(i * i) / (2.0 * sigma * sigma));
+}}
+";
+    }
+
+    public static string GetBone_VertexShader()
+    {
+        return @$"
+#version 320 es
+
+#define MAX_Bones {Max_Bones}
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 texCoords;
+layout(location = 3) in ivec4 boneIds;
+layout(location = 4) in vec4 weights;
+
+out vec3 Normal;
+out vec3 FragPos;
+out vec2 TexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat4 boneTransforms[MAX_Bones];
+
+void main() {{
+    mat4 boneTransform = boneTransforms[boneIds[0]] * weights[0];
+    boneTransform += boneTransforms[boneIds[1]] * weights[1];
+    boneTransform += boneTransforms[boneIds[2]] * weights[2];
+    boneTransform += boneTransforms[boneIds[3]] * weights[3];
+
+    if(weights[0] == 0.0) {{
+        boneTransform = mat4(1.0);
+    }}
+
+    gl_Position = projection * view * model * boneTransform * vec4(position, 1.0);
+    Normal = mat3(transpose(inverse(model * boneTransform))) * normal;
+    FragPos = vec3(model * boneTransform * vec4(position, 1.0));
+    TexCoords = texCoords;
 }}
 ";
     }
