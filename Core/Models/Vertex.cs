@@ -1,22 +1,29 @@
-﻿using Silk.NET.Maths;
+﻿using Core.Helpers;
+using Silk.NET.Maths;
 
 namespace Core.Models;
 
 public unsafe struct Vertex
 {
-    public const int MAX_BONE_INFLUENCE = 4;
-
     public Vector3D<float> Position;
 
     public Vector3D<float> Normal;
 
     public Vector2D<float> TexCoords;
 
-    public fixed int BoneIds[4];
+    public fixed int BoneIds[ShaderHelper.MAX_BONE_INFLUENCE];
 
-    public fixed float BoneWeights[4];
+    public fixed float BoneWeights[ShaderHelper.MAX_BONE_INFLUENCE];
 
-    public Vertex(Vector3D<float> position, Vector3D<float> normal, Vector2D<float> texCoords)
+    public Vertex()
+    {
+        for (int i = 0; i < ShaderHelper.MAX_BONE_INFLUENCE; i++)
+        {
+            BoneIds[i] = -1;
+        }
+    }
+
+    public Vertex(Vector3D<float> position, Vector3D<float> normal, Vector2D<float> texCoords) : this()
     {
         Position = position;
         Normal = normal;

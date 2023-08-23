@@ -34,7 +34,8 @@ public unsafe class Custom : BaseElement
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
         _boneDatas = new();
-        _boneMatrices = new Matrix4X4<float>[ShaderHelper.Max_Bones];
+        _boneMatrices = new Matrix4X4<float>[ShaderHelper.MAX_BONES];
+        Array.Fill(_boneMatrices, Matrix4X4<float>.Identity);
 
         List<CoreMesh> meshes = new();
         List<CoreAnimation> animations = new();
@@ -151,9 +152,9 @@ public unsafe class Custom : BaseElement
             {
                 Vertex vertex = vertices[(int)bone->MWeights[j].MVertexId];
 
-                for (int k = 0; k < 4; k++)
+                for (int k = 0; k < ShaderHelper.MAX_BONE_INFLUENCE; k++)
                 {
-                    if (vertex.BoneWeights[k] == 0.0f)
+                    if (vertex.BoneIds[k] == -1)
                     {
                         vertex.BoneIds[k] = boneData.Id;
                         vertex.BoneWeights[k] = bone->MWeights[j].MWeight;
@@ -232,11 +233,6 @@ public unsafe class Custom : BaseElement
 
     private void ProcessAnimation(Scene* scene, List<CoreAnimation> animations)
     {
-        foreach (BoneData bone in _boneDatas)
-        {
-            _boneMatrices[bone.Id] = bone.Offset;
-        }
-
         for (int i = 0; i < scene->MNumAnimations; i++)
         {
             AssimpAnimation* animation = scene->MAnimations[i];

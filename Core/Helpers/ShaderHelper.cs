@@ -34,7 +34,8 @@ public static class ShaderHelper
     public const string GaussianBlur_NoiseIntensityUniform = "noiseIntensity";
 
     // mvp-bone.vert
-    public const int Max_Bones = 200;
+    public const int MAX_BONES = 200;
+    public const int MAX_BONE_INFLUENCE = 4;
     public const string Bone_BoneIdsAttrib = "boneIds";
     public const string Bone_WeightsAttrib = "weights";
     public const string Bone_BoneTransformsUniform = "boneTransforms";
@@ -347,7 +348,8 @@ float GetWeight(int i) {{
         return @$"
 #version 320 es
 
-#define MAX_Bones {Max_Bones}
+#define MAX_BONES {MAX_BONES}
+#define MAX_BONE_INFLUENCE {MAX_BONE_INFLUENCE}
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -362,21 +364,32 @@ out vec2 TexCoords;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 boneTransforms[MAX_Bones];
+uniform mat4 boneTransforms[MAX_BONES];
 
 void main() {{
-    mat4 boneTransform = boneTransforms[boneIds[0]] * weights[0];
-    boneTransform += boneTransforms[boneIds[1]] * weights[1];
-    boneTransform += boneTransforms[boneIds[2]] * weights[2];
-    boneTransform += boneTransforms[boneIds[3]] * weights[3];
+    vec4 totalPosition = vec4(0.0);
+    vec3 totalNormal = vec3(0.0);
 
-    if(weights[0] == 0.0) {{
-        boneTransform = mat4(1.0);
+    for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {{
+
+        if(boneIds[i] == -1)
+            continue;
+
+        if(boneIds[i] >= MAX_BONES) {{
+            totalPosition = vec4(position, 1.0);
+            break;
+        }}
+
+        vec4 localPosition = boneTransforms[boneIds[i]] * vec4(position, 1.0);
+        totalPosition += localPosition * weights[i];
+
+        vec3 localNormal = mat3(boneTransforms[boneIds[i]]) * normal;
+        totalNormal += localNormal * weights[i];
     }}
 
-    gl_Position = projection * view * model * boneTransform * vec4(position, 1.0);
-    Normal = mat3(transpose(inverse(model * boneTransform))) * normal;
-    FragPos = vec3(model * boneTransform * vec4(position, 1.0));
+    gl_Position = projection * view * model * totalPosition;
+    Normal = mat3(transpose(inverse(model))) * totalNormal;
+    FragPos = vec3(model * totalPosition);
     TexCoords = texCoords;
 }}
 ";
