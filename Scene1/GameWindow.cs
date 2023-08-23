@@ -75,9 +75,9 @@ public unsafe class GameWindow : Game
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 4, "Resources/Textures/skybox/front.jpg");
         skybox.GetDiffuseTex().WriteImage(GLEnum.TextureCubeMapPositiveX + 5, "Resources/Textures/skybox/back.jpg");
 
-        floor = new Plane(gl, new Vector2D<float>(500.0f))
+        floor = new Plane(gl, new Vector2D<float>(5000.0f))
         {
-            Transform = Matrix4X4.CreateScale(1000.0f)
+            Transform = Matrix4X4.CreateScale(10000.0f)
         };
         floor.GetDiffuseTex().WriteImage("Resources/Textures/wood_floor.jpg");
 
