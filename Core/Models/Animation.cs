@@ -1,7 +1,6 @@
 ﻿using Core.Elements;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
-using System.Numerics;
 using AssimpAnimation = Silk.NET.Assimp.Animation;
 
 namespace Core.Models;

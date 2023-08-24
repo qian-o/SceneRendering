@@ -1,5 +1,4 @@
-﻿using Core.Helpers;
-using Silk.NET.Assimp;
+﻿using Silk.NET.Assimp;
 using Silk.NET.Maths;
 
 namespace Core.Models;
