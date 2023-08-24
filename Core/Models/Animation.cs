@@ -41,7 +41,7 @@ public unsafe class Animation
         AssimpNodeData dest = new()
         {
             Name = src->MName.AsString,
-            Transformation = Matrix4x4.Transpose(src->MTransformation).ToGeneric(),
+            Transformation = Matrix4X4.Transpose(src->MTransformation.ToGeneric()),
             Children = new AssimpNodeData[src->MNumChildren]
         };
 

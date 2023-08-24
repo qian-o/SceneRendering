@@ -100,7 +100,7 @@ public unsafe class GameWindow : Game
         animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae")
         // animationTest = new Custom(gl, "Resources/Models/测试动画.fbx")
         {
-            Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.01f)) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
+            Transform = Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
         };
         animationTest.Animator.PlayAnimation(animationTest.Animations[0]);
 

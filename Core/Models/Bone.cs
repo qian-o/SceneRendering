@@ -44,7 +44,7 @@ public unsafe class Bone
         {
             QuatKey quat = channel->MRotationKeys[i];
 
-            _rotations.Add(new KeyRotation((float)quat.MTime, quat.MValue.AsQuaternion.ToGeneric().GetGLMQuat()));
+            _rotations.Add(new KeyRotation((float)quat.MTime, quat.MValue.AsQuaternion.ToGeneric()));
         }
 
         for (int i = 0; i < _numScales; i++)
@@ -87,7 +87,7 @@ public unsafe class Bone
         {
             Quaternion<float> rotation = Quaternion<float>.Normalize(_rotations[0].Orientation);
 
-            return Matrix4X4.CreateFromQuaternion(rotation);
+            return Matrix4X4.CreateFromQuaternion(_rotations[0].Orientation);
         }
 
         int p0Index = GetRotationIndex(animationTime);
@@ -97,7 +97,7 @@ public unsafe class Bone
 
         Quaternion<float> finalRotation = Quaternion<float>.Slerp(_rotations[p0Index].Orientation, _rotations[p1Index].Orientation, scaleFactor);
 
-        finalRotation = Quaternion<float>.Normalize(finalRotation);
+        // finalRotation = Quaternion<float>.Normalize(finalRotation);
 
         return Matrix4X4.CreateFromQuaternion(finalRotation);
     }

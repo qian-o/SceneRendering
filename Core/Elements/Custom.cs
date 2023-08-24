@@ -3,6 +3,7 @@ using Core.Helpers;
 using Core.Models;
 using Core.Tools;
 using Silk.NET.Assimp;
+using Silk.NET.Core.Native;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
@@ -214,7 +215,7 @@ public unsafe class Custom : BaseElement
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
-                boneInfo = new BoneInfo(BoneMapping.Count, Matrix4x4.Transpose(bone->MOffsetMatrix).ToGeneric());
+                boneInfo = new BoneInfo(BoneMapping.Count, Matrix4X4.Transpose(bone->MOffsetMatrix.ToGeneric()));
 
                 BoneMapping.Add(name, boneInfo);
             }
