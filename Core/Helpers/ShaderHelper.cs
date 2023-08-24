@@ -390,7 +390,6 @@ void main() {{
             vec3 localNormal = mat3(finalBonesMatrices[boneIds[i]]) * normal;
             totalNormal += localNormal * weights[i];
         }}
-
     }}
 
     gl_Position = projection * view * model * totalPosition;
