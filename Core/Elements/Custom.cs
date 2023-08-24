@@ -7,9 +7,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using AssimpAnimation = Silk.NET.Assimp.Animation;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
-using CoreAnimation = Core.Models.Animation;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
 using CoreMesh = Core.Models.Mesh;
 using Program = Core.Tools.Program;
@@ -26,8 +24,6 @@ public unsafe class Custom : BaseElement
 
     public override CoreMesh[] Meshes { get; }
 
-    public CoreAnimation[] Animations { get; }
-
     public Custom(GL gl, string path) : base(gl)
     {
         _assimp = Assimp.GetApi();
@@ -38,15 +34,12 @@ public unsafe class Custom : BaseElement
         Array.Fill(_boneMatrices, Matrix4X4<float>.Identity);
 
         List<CoreMesh> meshes = new();
-        List<CoreAnimation> animations = new();
 
         Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
 
         ProcessNode(scene->MRootNode, scene, meshes);
-        ProcessAnimation(scene, animations);
 
         Meshes = meshes.ToArray();
-        Animations = animations.ToArray();
     }
 
     public override void Draw(Program program)
@@ -229,27 +222,5 @@ public unsafe class Custom : BaseElement
         }
 
         return materialTextures;
-    }
-
-    private void ProcessAnimation(Scene* scene, List<CoreAnimation> animations)
-    {
-        for (int i = 0; i < scene->MNumAnimations; i++)
-        {
-            AssimpAnimation* animation = scene->MAnimations[i];
-
-            List<AnimationNode> nodes = new();
-            for (int j = 0; j < animation->MNumChannels; j++)
-            {
-                NodeAnim* node = animation->MChannels[j];
-
-                Vector3D<float> position = new(node->MPositionKeys->MValue.X, node->MPositionKeys->MValue.Y, node->MPositionKeys->MValue.Z);
-                Quaternion<float> rotation = new(node->MRotationKeys->MValue.X, node->MRotationKeys->MValue.Y, node->MRotationKeys->MValue.Z, node->MRotationKeys->MValue.W);
-                Vector3D<float> scale = new(node->MScalingKeys->MValue.X, node->MScalingKeys->MValue.Y, node->MScalingKeys->MValue.Z);
-
-                nodes.Add(new AnimationNode(node->MNodeName.AsString, position, rotation, scale));
-            }
-
-            animations.Add(new CoreAnimation(animation->MName.AsString, animation->MDuration, animation->MTicksPerSecond, nodes.ToArray()));
-        }
     }
 }
