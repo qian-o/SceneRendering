@@ -96,7 +96,7 @@ public unsafe class Bone
         float scaleFactor = GetScaleFactor(_rotations[p0Index].Time, _rotations[p1Index].Time, animationTime);
 
         Quaternion<float> finalRotation = Quaternion<float>.Slerp(_rotations[p0Index].Orientation, _rotations[p1Index].Orientation, scaleFactor);
-    
+
         finalRotation = Quaternion<float>.Normalize(finalRotation);
 
         return Matrix4X4.CreateFromQuaternion(finalRotation);
