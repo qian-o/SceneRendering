@@ -230,7 +230,7 @@ public unsafe class Custom : BaseElement
     {
         for (int i = 0; i < ShaderHelper.MAX_BONE_INFLUENCE; i++)
         {
-            if (vertex.BoneIds[i] < 0)
+            if (vertex.BoneIds[i] == -1)
             {
                 vertex.BoneIds[i] = boneId;
                 vertex.BoneWeights[i] = weight;

@@ -23,7 +23,6 @@ public unsafe class Animation
     public Animation(string animationPath, Custom custom, int animationIndex)
     {
         _custom = custom;
-        Bones = new List<Bone>();
 
         Assimp importer = Assimp.GetApi();
 
@@ -33,17 +32,31 @@ public unsafe class Animation
 
         Duration = (float)animation->MDuration;
         TicksPerSecond = (float)animation->MTicksPerSecond;
-
-        ReadMissingBones(animation);
-
-        AssimpNodeData assimpNodeData = new();
-        ReadHeirarchyData(ref assimpNodeData, scene->MRootNode);
-
-        RootNode = assimpNodeData;
+        RootNode = ReadHeirarchyData(scene->MRootNode);
+        Bones = ReadMissingBones(animation);
     }
 
-    private void ReadMissingBones(AssimpAnimation* animation)
+    private AssimpNodeData ReadHeirarchyData(Node* src)
     {
+        AssimpNodeData dest = new()
+        {
+            Name = src->MName.AsString,
+            Transformation = Matrix4x4.Transpose(src->MTransformation).ToGeneric(),
+            Children = new AssimpNodeData[src->MNumChildren]
+        };
+
+        for (int i = 0; i < src->MNumChildren; i++)
+        {
+            dest.Children[i] = ReadHeirarchyData(src->MChildren[i]);
+        }
+
+        return dest;
+    }
+
+    private List<Bone> ReadMissingBones(AssimpAnimation* animation)
+    {
+        List<Bone> bones = new();
+
         for (int i = 0; i < animation->MNumChannels; i++)
         {
             NodeAnim* channel = animation->MChannels[i];
@@ -57,22 +70,9 @@ public unsafe class Animation
                 BoneMapping.Add(name, boneInfo);
             }
 
-            Bones.Add(new Bone(boneInfo.Id, name, channel));
+            bones.Add(new Bone(boneInfo.Id, name, channel));
         }
-    }
 
-    private void ReadHeirarchyData(ref AssimpNodeData dest, Node* src)
-    {
-        dest.Name = src->MName.AsString;
-        dest.Transformation = Matrix4x4.Transpose(src->MTransformation).ToGeneric();
-        dest.Children = new AssimpNodeData[src->MNumChildren];
-
-        for (int i = 0; i < src->MNumChildren; i++)
-        {
-            AssimpNodeData newData = new();
-            ReadHeirarchyData(ref newData, src->MChildren[i]);
-
-            dest.Children[i] = newData;
-        }
+        return bones;
     }
 }
