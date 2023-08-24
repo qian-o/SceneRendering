@@ -38,7 +38,7 @@ public static class ShaderHelper
     public const int MAX_BONE_INFLUENCE = 4;
     public const string Bone_BoneIdsAttrib = "boneIds";
     public const string Bone_WeightsAttrib = "weights";
-    public const string Bone_BoneTransformsUniform = "boneTransforms";
+    public const string Bone_FinalBonesMatricesUniform = "finalBonesMatrices";
 
     public static string GetMVP_VertexShader()
     {
@@ -364,7 +364,7 @@ out vec2 TexCoords;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 boneTransforms[MAX_BONES];
+uniform mat4 finalBonesMatrices[MAX_BONES];
 
 void main() {{
     vec4 totalPosition = vec4(0.0);
@@ -384,10 +384,10 @@ void main() {{
                 break;
             }}
 
-            vec4 localPosition = boneTransforms[boneIds[i]] * vec4(position, 1.0);
+            vec4 localPosition = finalBonesMatrices[boneIds[i]] * vec4(position, 1.0);
             totalPosition += localPosition * weights[i];
 
-            vec3 localNormal = mat3(boneTransforms[boneIds[i]]) * normal;
+            vec3 localNormal = mat3(finalBonesMatrices[boneIds[i]]) * normal;
             totalNormal += localNormal * weights[i];
         }}
 

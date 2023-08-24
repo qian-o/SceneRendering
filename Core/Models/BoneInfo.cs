@@ -2,11 +2,11 @@
 
 namespace Core.Models;
 
-public readonly struct BoneInfo
+public struct BoneInfo
 {
-    public int Id { get; }
+    public int Id;
 
-    public Matrix4X4<float> Offset { get; }
+    public Matrix4X4<float> Offset;
 
     public BoneInfo(int id, Matrix4X4<float> offset)
     {

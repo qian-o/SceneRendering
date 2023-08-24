@@ -7,7 +7,9 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using AssimpBone = Silk.NET.Assimp.Bone;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
+using CoreAnimation = Core.Models.Animation;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
 using CoreMesh = Core.Models.Mesh;
 using Program = Core.Tools.Program;
@@ -19,33 +21,39 @@ public unsafe class Custom : BaseElement
     private readonly Assimp _assimp;
     private readonly string _directory;
     private readonly Dictionary<string, Texture2D> _cache;
-    private readonly Dictionary<string, BoneInfo> _boneInfos;
-    private readonly Matrix4X4<float>[] _boneMatrices;
 
     public override CoreMesh[] Meshes { get; }
+
+    public Dictionary<string, BoneInfo> BoneMapping { get; } = new Dictionary<string, BoneInfo>();
+
+    public List<CoreAnimation> Animations { get; } = new List<CoreAnimation>();
+
+    public Animator Animator { get; } = new Animator();
 
     public Custom(GL gl, string path) : base(gl)
     {
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
-        _boneInfos = new();
-        _boneMatrices = new Matrix4X4<float>[ShaderHelper.MAX_BONES];
-        Array.Fill(_boneMatrices, Matrix4X4<float>.Identity);
 
         List<CoreMesh> meshes = new();
 
-        Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
+        Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.FlipUVs));
 
         ProcessNode(scene->MRootNode, scene, meshes);
 
         Meshes = meshes.ToArray();
+
+        for (int i = 0; i < scene->MNumAnimations; i++)
+        {
+            Animations.Add(new CoreAnimation(path, this, i));
+        }
     }
 
     public override void Draw(Program program)
     {
         bool anyMaterial = program.GetUniform(ShaderHelper.Lighting_MaterialUniform) >= 0;
-        bool anyBones = program.GetUniform(ShaderHelper.Bone_BoneTransformsUniform) >= 0;
+        bool anyBones = program.GetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform) >= 0;
 
         uint position = (uint)program.GetAttrib(ShaderHelper.MVP_PositionAttrib);
         uint normal = (uint)program.GetAttrib(ShaderHelper.MVP_NormalAttrib);
@@ -60,7 +68,7 @@ public unsafe class Custom : BaseElement
             boneIds = (uint)program.GetAttrib(ShaderHelper.Bone_BoneIdsAttrib);
             weights = (uint)program.GetAttrib(ShaderHelper.Bone_WeightsAttrib);
 
-            program.SetUniform(ShaderHelper.Bone_BoneTransformsUniform, _boneMatrices);
+            program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, Animator.FinalBoneMatrices);
         }
 
         foreach (CoreMesh mesh in Meshes)
@@ -96,6 +104,7 @@ public unsafe class Custom : BaseElement
         for (uint i = 0; i < node->MNumMeshes; i++)
         {
             AssimpMesh* mesh = scene->MMeshes[node->MMeshes[i]];
+
             meshes.Add(ProcessMesh(mesh, scene));
         }
 
@@ -198,15 +207,15 @@ public unsafe class Custom : BaseElement
     {
         for (uint i = 0; i < mesh->MNumBones; i++)
         {
-            Bone* bone = mesh->MBones[i];
+            AssimpBone* bone = mesh->MBones[i];
 
             string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
 
-            if (!_boneInfos.TryGetValue(name, out BoneInfo boneInfo))
+            if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
-                boneInfo = new BoneInfo(_boneInfos.Count, bone->MOffsetMatrix.ToGeneric());
+                boneInfo = new BoneInfo(BoneMapping.Count, bone->MOffsetMatrix.ToGeneric());
 
-                _boneInfos.Add(name, boneInfo);
+                BoneMapping.Add(name, boneInfo);
             }
 
             for (uint j = 0; j < bone->MNumWeights; j++)
