@@ -6,6 +6,7 @@ using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using AssimpBone = Silk.NET.Assimp.Bone;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
@@ -125,8 +126,8 @@ public unsafe class Custom : BaseElement
         {
             Vertex vertex = new()
             {
-                Position = new Vector3D<float>(mesh->MVertices[i].X, mesh->MVertices[i].Y, mesh->MVertices[i].Z),
-                Normal = new Vector3D<float>(mesh->MNormals[i].X, mesh->MNormals[i].Y, mesh->MNormals[i].Z)
+                Position = mesh->MVertices[i].ToGeneric(),
+                Normal = mesh->MNormals[i].ToGeneric()
             };
 
             if (mesh->MTextureCoords[0] != null)
@@ -213,7 +214,7 @@ public unsafe class Custom : BaseElement
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
-                boneInfo = new BoneInfo(BoneMapping.Count, bone->MOffsetMatrix.ToGeneric());
+                boneInfo = new BoneInfo(BoneMapping.Count, Matrix4x4.Transpose(bone->MOffsetMatrix).ToGeneric());
 
                 BoneMapping.Add(name, boneInfo);
             }

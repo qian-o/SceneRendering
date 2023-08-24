@@ -37,11 +37,6 @@ public unsafe class GameWindow : Game
     private float noiseIntensity = 0.1f;
     #endregion
 
-    #region Timing
-    private double deltaTime = 0.0f;
-    private double lastFrame = 0.0f;
-    #endregion
-
     protected override void Load()
     {
         gl.Enable(GLEnum.DepthTest);
@@ -102,7 +97,11 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
-        animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae");
+        animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae")
+        // animationTest = new Custom(gl, "Resources/Models/测试动画.fbx")
+        {
+            Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.01f)) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
+        };
         animationTest.Animator.PlayAnimation(animationTest.Animations[0]);
 
         gaussianBlurFilter1 = new Plane(gl)
@@ -123,9 +122,6 @@ public unsafe class GameWindow : Game
 
     protected override void Render(double obj)
     {
-        deltaTime = obj - lastFrame;
-        lastFrame = obj;
-
         // 场景渲染
         {
             gl.DepthFunc(GLEnum.Lequal);
@@ -177,7 +173,7 @@ public unsafe class GameWindow : Game
             boneProgram.SetUniform(ShaderHelper.MVP_ViewUniform, camera.View);
             boneProgram.SetUniform(ShaderHelper.MVP_ProjectionUniform, camera.Projection);
 
-            animationTest.Animator.UpdateAnimation((float)deltaTime);
+            animationTest.Animator.UpdateAnimation((float)obj);
             animationTest.Draw(boneProgram);
 
             boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);

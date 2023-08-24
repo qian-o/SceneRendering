@@ -56,9 +56,9 @@ public class Animator
             FinalBoneMatrices[boneInfo.Id] = globalTransform * boneInfo.Offset;
         }
 
-        foreach (AssimpNodeData item in node.Children)
+        for (int i = 0; i < node.Children.Length; i++)
         {
-            CalculateBoneTransform(item, globalTransform);
+            CalculateBoneTransform(node.Children[i], globalTransform);
         }
     }
 }

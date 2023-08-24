@@ -1,6 +1,7 @@
 ﻿using Core.Elements;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
+using System.Numerics;
 using AssimpAnimation = Silk.NET.Assimp.Animation;
 
 namespace Core.Models;
@@ -63,7 +64,7 @@ public unsafe class Animation
     private void ReadHeirarchyData(ref AssimpNodeData dest, Node* src)
     {
         dest.Name = src->MName.AsString;
-        dest.Transformation = src->MTransformation.ToGeneric();
+        dest.Transformation = Matrix4x4.Transpose(src->MTransformation).ToGeneric();
         dest.Children = new AssimpNodeData[src->MNumChildren];
 
         for (int i = 0; i < src->MNumChildren; i++)

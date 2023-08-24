@@ -1,6 +1,6 @@
-﻿using Silk.NET.Assimp;
+﻿using Core.Helpers;
+using Silk.NET.Assimp;
 using Silk.NET.Maths;
-using System.Numerics;
 
 namespace Core.Models;
 
@@ -44,7 +44,7 @@ public unsafe class Bone
         {
             QuatKey quat = channel->MRotationKeys[i];
 
-            _rotations.Add(new KeyRotation((float)quat.MTime, quat.MValue.AsQuaternion.ToGeneric()));
+            _rotations.Add(new KeyRotation((float)quat.MTime, quat.MValue.AsQuaternion.ToGeneric().GetGLMQuat()));
         }
 
         for (int i = 0; i < _numScales; i++)
