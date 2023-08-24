@@ -19,7 +19,7 @@ public unsafe class Custom : BaseElement
     private readonly Assimp _assimp;
     private readonly string _directory;
     private readonly Dictionary<string, Texture2D> _cache;
-    private readonly List<BoneData> _boneDatas;
+    private readonly Dictionary<string, BoneInfo> _boneInfos;
     private readonly Matrix4X4<float>[] _boneMatrices;
 
     public override CoreMesh[] Meshes { get; }
@@ -29,7 +29,7 @@ public unsafe class Custom : BaseElement
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
-        _boneDatas = new();
+        _boneInfos = new();
         _boneMatrices = new Matrix4X4<float>[ShaderHelper.MAX_BONES];
         Array.Fill(_boneMatrices, Matrix4X4<float>.Identity);
 
@@ -128,38 +128,6 @@ public unsafe class Custom : BaseElement
             vertices.Add(vertex);
         }
 
-        for (uint i = 0; i < mesh->MNumBones; i++)
-        {
-            Bone* bone = mesh->MBones[i];
-
-            string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
-
-            if (_boneDatas.Find(item => item.Name == name) is not BoneData boneData)
-            {
-                boneData = new BoneData(_boneDatas.Count, name, bone->MOffsetMatrix.Convert<float>());
-
-                _boneDatas.Add(boneData);
-            }
-
-            for (uint j = 0; j < bone->MNumWeights; j++)
-            {
-                Vertex vertex = vertices[(int)bone->MWeights[j].MVertexId];
-
-                for (int k = 0; k < ShaderHelper.MAX_BONE_INFLUENCE; k++)
-                {
-                    if (vertex.BoneIds[k] == -1)
-                    {
-                        vertex.BoneIds[k] = boneData.Id;
-                        vertex.BoneWeights[k] = bone->MWeights[j].MWeight;
-
-                        break;
-                    }
-                }
-
-                vertices[(int)bone->MWeights[j].MVertexId] = vertex;
-            }
-        }
-
         for (uint i = 0; i < mesh->MNumFaces; i++)
         {
             Face face = mesh->MFaces[i];
@@ -197,6 +165,8 @@ public unsafe class Custom : BaseElement
             specular.WriteColor(new Vector3D<byte>(0));
         }
 
+        ExtractBoneWeightForVertices(vertices, mesh, scene);
+
         return new CoreMesh(_gl, vertices.ToArray(), indices.ToArray(), diffuse, specular);
     }
 
@@ -222,5 +192,46 @@ public unsafe class Custom : BaseElement
         }
 
         return materialTextures;
+    }
+
+    private void ExtractBoneWeightForVertices(List<Vertex> vertices, AssimpMesh* mesh, Scene* scene)
+    {
+        for (uint i = 0; i < mesh->MNumBones; i++)
+        {
+            Bone* bone = mesh->MBones[i];
+
+            string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
+
+            if (_boneInfos.TryGetValue(name, out BoneInfo boneInfo))
+            {
+                boneInfo = new BoneInfo(_boneInfos.Count, bone->MOffsetMatrix.ToGeneric());
+
+                _boneInfos.Add(name, boneInfo);
+            }
+
+            for (uint j = 0; j < bone->MNumWeights; j++)
+            {
+                int vertexId = (int)bone->MWeights[j].MVertexId;
+                float weight = bone->MWeights[j].MWeight;
+
+                Vertex vertex = vertices[vertexId];
+                SetVertexBoneData(ref vertex, boneInfo.Id, weight);
+                vertices[vertexId] = vertex;
+            }
+        }
+    }
+
+    private void SetVertexBoneData(ref Vertex vertex, int boneId, float weight)
+    {
+        for (int i = 0; i < ShaderHelper.MAX_BONE_INFLUENCE; i++)
+        {
+            if (vertex.BoneIds[i] < 0)
+            {
+                vertex.BoneIds[i] = boneId;
+                vertex.BoneWeights[i] = weight;
+
+                break;
+            }
+        }
     }
 }

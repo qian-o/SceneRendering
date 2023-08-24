@@ -11,6 +11,10 @@ public unsafe struct Vertex
 
     public Vector2D<float> TexCoords;
 
+    public Vector3D<float> Tangent;
+
+    public Vector3D<float> Bitangent;
+
     public fixed int BoneIds[ShaderHelper.MAX_BONE_INFLUENCE];
 
     public fixed float BoneWeights[ShaderHelper.MAX_BONE_INFLUENCE];
@@ -20,6 +24,7 @@ public unsafe struct Vertex
         for (int i = 0; i < ShaderHelper.MAX_BONE_INFLUENCE; i++)
         {
             BoneIds[i] = -1;
+            BoneWeights[i] = 0.0f;
         }
     }
 

@@ -193,10 +193,7 @@ public unsafe class GameWindow : Game
 
         Vector4 color = (Vector4)deviation;
         ImGui.DragFloat4("Filter Deviation", ref color, 0.01f, -1.0f, 1.0f);
-        deviation.X = color.X;
-        deviation.Y = color.Y;
-        deviation.Z = color.Z;
-        deviation.W = color.W;
+        deviation = SystemNumericsExtensions.ToGeneric(color);
 
         ImGui.DragFloat("Filter Noise Intensity", ref noiseIntensity, 0.01f, 0.0f, 1.0f);
     }
