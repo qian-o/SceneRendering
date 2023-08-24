@@ -107,7 +107,7 @@ public unsafe class Custom : BaseElement
 
     private CoreMesh ProcessMesh(AssimpMesh* mesh, Scene* scene)
     {
-        List<Vertex> vertices = new();
+        Vertex[] vertices = new Vertex[mesh->MNumVertices];
         List<uint> indices = new();
         Texture2D? diffuse = null;
         Texture2D? specular = null;
@@ -125,7 +125,7 @@ public unsafe class Custom : BaseElement
                 vertex.TexCoords = new Vector2D<float>(mesh->MTextureCoords[0][i].X, mesh->MTextureCoords[0][i].Y);
             }
 
-            vertices.Add(vertex);
+            vertices[i] = vertex;
         }
 
         for (uint i = 0; i < mesh->MNumFaces; i++)
@@ -167,7 +167,7 @@ public unsafe class Custom : BaseElement
 
         ExtractBoneWeightForVertices(vertices, mesh, scene);
 
-        return new CoreMesh(_gl, vertices.ToArray(), indices.ToArray(), diffuse, specular);
+        return new CoreMesh(_gl, vertices, indices.ToArray(), diffuse, specular);
     }
 
     private List<Texture2D> LoadMaterialTextures(Material* mat, TextureType type)
@@ -194,7 +194,7 @@ public unsafe class Custom : BaseElement
         return materialTextures;
     }
 
-    private void ExtractBoneWeightForVertices(List<Vertex> vertices, AssimpMesh* mesh, Scene* scene)
+    private void ExtractBoneWeightForVertices(Vertex[] vertices, AssimpMesh* mesh, Scene* scene)
     {
         for (uint i = 0; i < mesh->MNumBones; i++)
         {
@@ -202,7 +202,7 @@ public unsafe class Custom : BaseElement
 
             string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
 
-            if (_boneInfos.TryGetValue(name, out BoneInfo boneInfo))
+            if (!_boneInfos.TryGetValue(name, out BoneInfo boneInfo))
             {
                 boneInfo = new BoneInfo(_boneInfos.Count, bone->MOffsetMatrix.ToGeneric());
 
@@ -211,12 +211,7 @@ public unsafe class Custom : BaseElement
 
             for (uint j = 0; j < bone->MNumWeights; j++)
             {
-                int vertexId = (int)bone->MWeights[j].MVertexId;
-                float weight = bone->MWeights[j].MWeight;
-
-                Vertex vertex = vertices[vertexId];
-                SetVertexBoneData(ref vertex, boneInfo.Id, weight);
-                vertices[vertexId] = vertex;
+                SetVertexBoneData(ref vertices[(int)bone->MWeights[j].MVertexId], boneInfo.Id, bone->MWeights[j].MWeight);
             }
         }
     }
