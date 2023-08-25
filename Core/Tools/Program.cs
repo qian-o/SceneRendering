@@ -175,10 +175,11 @@ public unsafe class Program : IDisposable
     {
         Enable();
 
-        int index = 0;
-        foreach (Matrix4X4<float> matrix in data)
+        Matrix4X4<float>[] matrixArray = data.ToArray();
+
+        fixed (Matrix4X4<float>* matrix = matrixArray)
         {
-            _gl.UniformMatrix4(GetUniform($"{name}[{index++}]"), 1, false, (float*)&matrix);
+            _gl.UniformMatrix4(GetUniform(name), (uint)matrixArray.Length, false, (float*)matrix);
         }
     }
 

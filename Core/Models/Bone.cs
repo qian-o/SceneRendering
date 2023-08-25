@@ -86,7 +86,7 @@ public unsafe class Bone
         {
             Quaternion<float> rotation = Quaternion<float>.Normalize(_rotations[0].Orientation);
 
-            return Matrix4X4.CreateFromQuaternion(_rotations[0].Orientation);
+            return Matrix4X4.CreateFromQuaternion(rotation);
         }
 
         int p0Index = GetRotationIndex(animationTime);
@@ -96,7 +96,7 @@ public unsafe class Bone
 
         Quaternion<float> finalRotation = Quaternion<float>.Slerp(_rotations[p0Index].Orientation, _rotations[p1Index].Orientation, scaleFactor);
 
-        // finalRotation = Quaternion<float>.Normalize(finalRotation);
+        finalRotation = Quaternion<float>.Normalize(finalRotation);
 
         return Matrix4X4.CreateFromQuaternion(finalRotation);
     }

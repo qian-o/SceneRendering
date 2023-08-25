@@ -70,7 +70,7 @@ public unsafe class Custom : BaseElement
 
             program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, Animator.FinalBoneMatrices);
         }
-
+        
         foreach (CoreMesh mesh in Meshes)
         {
             _gl.ActiveTexture(GLEnum.Texture0);
@@ -213,7 +213,7 @@ public unsafe class Custom : BaseElement
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
-                boneInfo = new BoneInfo(BoneMapping.Count, Matrix4X4.Transpose(bone->MOffsetMatrix.ToGeneric()));
+                boneInfo = new BoneInfo(BoneMapping.Count, bone->MOffsetMatrix.ToGeneric());
 
                 BoneMapping.Add(name, boneInfo);
             }
