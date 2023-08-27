@@ -55,6 +55,8 @@ public unsafe class Custom : BaseElement
         {
             Animations.Add(new CoreAnimation(path, this, i));
         }
+
+        _assimp.Dispose();
     }
 
     public override void Draw(Program program)

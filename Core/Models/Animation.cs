@@ -28,7 +28,7 @@ public unsafe class Animation
     {
         _custom = custom;
 
-        Assimp importer = Assimp.GetApi();
+        using Assimp importer = Assimp.GetApi();
 
         Scene* scene = importer.ImportFile(animationPath, (uint)PostProcessSteps.Triangulate);
 
