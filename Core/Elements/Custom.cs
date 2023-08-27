@@ -196,7 +196,7 @@ public unsafe class Custom : BaseElement
             AssimpString path;
             _assimp.GetMaterialTexture(mat, type, i, &path, null, null, null, null, null, null);
 
-            if (!_cache.TryGetValue(path.ToString(), out Texture2D? texture))
+            if (!_cache.TryGetValue(path.AsString, out Texture2D? texture))
             {
                 texture = new(_gl, GLEnum.Rgba, GLEnum.UnsignedByte);
                 texture.WriteImage(Path.Combine(_directory, path.ToString()));
