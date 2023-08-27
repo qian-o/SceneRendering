@@ -66,8 +66,10 @@ void main() {{
 ";
     }
 
-    public static string GetTexture_FragmentShader()
+    public static string GetTexture_FragmentShader(bool discardAlpha = false)
     {
+        string da = "    if(texColor.a < 0.1)\r\n        discard;";
+
         return @$"
 #version 320 es
 
@@ -80,7 +82,11 @@ out vec4 FragColor;
 uniform sampler2D tex;
 
 void main() {{
-    FragColor = vec4(texture(tex, TexCoords));
+    vec4 texColor = vec4(texture(tex, TexCoords));
+
+{(discardAlpha ? da : string.Empty)}
+
+    FragColor = texColor;
 }}
 ";
     }

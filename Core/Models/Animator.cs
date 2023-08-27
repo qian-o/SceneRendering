@@ -49,11 +49,11 @@ public class Animator
             nodeTransform = bone.LocalTransform;
         }
 
-        Matrix4X4<float> globalTransform = parentTransform * nodeTransform;
+        Matrix4X4<float> globalTransform = nodeTransform * parentTransform;
 
         if (currentAnimation!.BoneMapping.TryGetValue(nodeName, out BoneInfo boneInfo))
         {
-            FinalBoneMatrices[boneInfo.Id] = globalTransform * boneInfo.Offset;
+            FinalBoneMatrices[boneInfo.Id] = boneInfo.Offset * globalTransform * currentAnimation.GlobalInverseTransform;
         }
 
         for (int i = 0; i < node.Children.Length; i++)

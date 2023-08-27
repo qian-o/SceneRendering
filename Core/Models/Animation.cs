@@ -1,4 +1,5 @@
 ﻿using Core.Elements;
+using Core.Helpers;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using AssimpAnimation = Silk.NET.Assimp.Animation;
@@ -9,11 +10,15 @@ public unsafe class Animation
 {
     private readonly Custom _custom;
 
+    public string Name { get; }
+
     public float Duration { get; }
 
     public float TicksPerSecond { get; }
 
     public AssimpNodeData RootNode { get; }
+
+    public Matrix4X4<float> GlobalInverseTransform { get; }
 
     public Dictionary<string, BoneInfo> BoneMapping => _custom.BoneMapping;
 
@@ -29,9 +34,11 @@ public unsafe class Animation
 
         AssimpAnimation* animation = scene->MAnimations[animationIndex];
 
+        Name = animation->MName.AsString;
         Duration = (float)animation->MDuration;
         TicksPerSecond = (float)animation->MTicksPerSecond;
         RootNode = ReadHeirarchyData(scene->MRootNode);
+        GlobalInverseTransform = RootNode.Transformation.Invert();
         Bones = ReadMissingBones(animation);
     }
 
@@ -40,7 +47,7 @@ public unsafe class Animation
         AssimpNodeData dest = new()
         {
             Name = src->MName.AsString,
-            Transformation = src->MTransformation.ToGeneric(),
+            Transformation = Matrix4X4.Transpose(src->MTransformation.ToGeneric()),
             Children = new AssimpNodeData[src->MNumChildren]
         };
 

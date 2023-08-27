@@ -60,7 +60,7 @@ public unsafe class Bone
         Matrix4X4<float> rotation = InterpolateRotation(animationTime);
         Matrix4X4<float> scale = InterpolateScale(animationTime);
 
-        LocalTransform = translation * rotation * scale;
+        LocalTransform = scale * rotation * translation;
     }
 
     private Matrix4X4<float> InterpolatePosition(float animationTime)

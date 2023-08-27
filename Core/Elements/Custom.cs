@@ -30,7 +30,7 @@ public unsafe class Custom : BaseElement
 
     public Animator Animator { get; } = new Animator();
 
-    public Custom(GL gl, string path) : base(gl)
+    public Custom(GL gl, string path, bool isAnimation = false) : base(gl)
     {
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(path)!;
@@ -38,7 +38,14 @@ public unsafe class Custom : BaseElement
 
         List<CoreMesh> meshes = new();
 
-        Scene* scene = _assimp.ImportFile(path, (uint)(PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.FlipUVs));
+        PostProcessSteps flags = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.FlipUVs;
+
+        if (!isAnimation)
+        {
+            flags |= PostProcessSteps.PreTransformVertices;
+        }
+
+        Scene* scene = _assimp.ImportFile(path, (uint)flags);
 
         ProcessNode(scene->MRootNode, scene, meshes);
 
@@ -70,7 +77,7 @@ public unsafe class Custom : BaseElement
 
             program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, Animator.FinalBoneMatrices);
         }
-        
+
         foreach (CoreMesh mesh in Meshes)
         {
             _gl.ActiveTexture(GLEnum.Texture0);
@@ -213,7 +220,7 @@ public unsafe class Custom : BaseElement
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
-                boneInfo = new BoneInfo(BoneMapping.Count, bone->MOffsetMatrix.ToGeneric());
+                boneInfo = new BoneInfo(BoneMapping.Count, Matrix4X4.Transpose(bone->MOffsetMatrix.ToGeneric()));
 
                 BoneMapping.Add(name, boneInfo);
             }

@@ -51,6 +51,7 @@ public unsafe class GameWindow : Game
         using Shader skyboxFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetSkybox_FragmentShader());
         using Shader mvpVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetMVP_VertexShader());
         using Shader textureFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTexture_FragmentShader());
+        using Shader discardAlphaTextureFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetTexture_FragmentShader(true));
         using Shader gaussianBlurFragment = new(gl, GLEnum.FragmentShader, ShaderHelper.GetGaussianBlur_FragmentShader());
         using Shader boneVertex = new(gl, GLEnum.VertexShader, ShaderHelper.GetBone_VertexShader());
 
@@ -64,7 +65,7 @@ public unsafe class GameWindow : Game
         gaussianBlurProgram.Attach(mvpVertex, gaussianBlurFragment);
 
         boneProgram = new Program(gl);
-        boneProgram.Attach(boneVertex, textureFragment);
+        boneProgram.Attach(boneVertex, discardAlphaTextureFragment);
 
         skybox = new Skybox(gl);
 
@@ -97,10 +98,10 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
-        animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae")
-        // animationTest = new Custom(gl, "Resources/Models/测试动画.fbx")
+        // animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae", true)
+        animationTest = new Custom(gl, "Resources/Models/测试动画.fbx", true)
         {
-            Transform = Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
+            Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
         };
         animationTest.Animator.PlayAnimation(animationTest.Animations[0]);
 
