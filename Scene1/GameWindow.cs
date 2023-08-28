@@ -115,8 +115,9 @@ public unsafe class GameWindow : Game
         {
             Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateScale(2.0f)
         };
-    }
 
+        MikuMikuDance mmd = new(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx", "Resources/Models/大喜/动作数据/大喜MMD动作数据-喜鹊泠鸢专用版.vmd");
+    }
     protected override void Update(double obj)
     {
     }
