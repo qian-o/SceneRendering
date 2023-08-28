@@ -229,7 +229,7 @@ public unsafe class Custom : BaseElement
         {
             AssimpBone* bone = mesh->MBones[i];
 
-            string name = Marshal.PtrToStringAnsi((IntPtr)bone->MName.Data)!;
+            string name = bone->MName.AsString;
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {

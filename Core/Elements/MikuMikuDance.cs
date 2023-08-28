@@ -6,8 +6,6 @@ using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Text;
 using AssimpBone = Silk.NET.Assimp.Bone;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using CoreMaterial = Core.Models.ShaderStructures.Material;
@@ -21,7 +19,6 @@ public unsafe class MikuMikuDance : BaseElement
     private readonly Assimp _assimp;
     private readonly string _directory;
     private readonly Dictionary<string, Texture2D> _cache;
-    private readonly Encoding _encoding;
 
     public override CoreMesh[] Meshes { get; }
 
@@ -32,7 +29,6 @@ public unsafe class MikuMikuDance : BaseElement
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(pmxPath)!;
         _cache = new();
-        _encoding = CodePagesEncodingProvider.Instance.GetEncoding("Shift-JIS")!;
 
         PostProcessSteps flags = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.FlipUVs;
 
@@ -216,7 +212,7 @@ public unsafe class MikuMikuDance : BaseElement
         {
             AssimpBone* bone = mesh->MBones[i];
 
-            string name = _encoding.GetString(bone->MName.Data, (int)bone->MName.Length);
+            string name = bone->MName.AsString;
 
             if (!BoneMapping.TryGetValue(name, out BoneInfo boneInfo))
             {
