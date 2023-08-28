@@ -58,6 +58,19 @@ public static unsafe class TextureExtensions
         texture.FlushTexture(new Vector2D<uint>(1024, 1024), GLEnum.Rgba, GLEnum.UnsignedByte);
     }
 
+    public static void WriteMatrixArray(this Texture2D texture, IEnumerable<Matrix4X4<float>> matrices)
+    {
+        Matrix4X4<float>[] matrixArray = matrices.ToArray();
+
+        texture.AllocationBuffer((uint)(matrixArray.Length * 16 * sizeof(float)), out void* pboData);
+
+        Span<Matrix4X4<float>> span = new(pboData, matrixArray.Length);
+
+        matrixArray.CopyTo(span);
+
+        texture.FlushTexture(new Vector2D<uint>(4, (uint)matrixArray.Length), GLEnum.Rgba, GLEnum.Float);
+    }
+
     public static void WriteColor(this Texture2D texture, Color color)
     {
         WriteColor(texture, new Vector4D<byte>(color.R, color.G, color.B, color.A));

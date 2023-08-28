@@ -28,7 +28,7 @@ public unsafe class Custom : BaseElement
 
     public List<CoreAnimation> Animations { get; } = new List<CoreAnimation>();
 
-    public Animator Animator { get; } = new Animator();
+    public Animator Animator { get; }
 
     public Custom(GL gl, string path, bool isAnimation = false) : base(gl)
     {
@@ -63,6 +63,8 @@ public unsafe class Custom : BaseElement
             Meshes = Array.Empty<CoreMesh>();
         }
 
+        Animator = new Animator(_gl);
+
         _assimp.Dispose();
     }
 
@@ -84,23 +86,25 @@ public unsafe class Custom : BaseElement
             boneIds = (uint)program.GetAttrib(ShaderHelper.Bone_BoneIdsAttrib);
             weights = (uint)program.GetAttrib(ShaderHelper.Bone_WeightsAttrib);
 
-            program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, Animator.FinalBoneMatrices);
+            _gl.ActiveTexture(GLEnum.Texture0);
+            Animator.FinalBoneMatricesTexture.Enable();
+            program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, 0);
         }
 
         foreach (CoreMesh mesh in Meshes)
         {
-            _gl.ActiveTexture(GLEnum.Texture0);
+            _gl.ActiveTexture(GLEnum.Texture1);
             mesh.Diffuse2D!.Enable();
 
             if (anyMaterial)
             {
-                _gl.ActiveTexture(GLEnum.Texture1);
+                _gl.ActiveTexture(GLEnum.Texture2);
                 mesh.Specular2D!.Enable();
 
                 CoreMaterial material = new()
                 {
-                    Diffuse = 0,
-                    Specular = 1,
+                    Diffuse = 1,
+                    Specular = 2,
                     Shininess = 64.0f
                 };
 
@@ -108,7 +112,7 @@ public unsafe class Custom : BaseElement
             }
             else
             {
-                program.SetUniform(ShaderHelper.Texture_TexUniform, 0);
+                program.SetUniform(ShaderHelper.Texture_TexUniform, 1);
             }
 
             mesh.Draw(position, normal, texCoords, boneIds, weights);

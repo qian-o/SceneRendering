@@ -34,7 +34,7 @@ public static class ShaderHelper
     public const string GaussianBlur_NoiseIntensityUniform = "noiseIntensity";
 
     // mvp-bone.vert
-    public const int MAX_BONES = 200;
+    public const int MAX_BONES = 2048;
     public const int MAX_BONE_INFLUENCE = 4;
     public const string Bone_BoneIdsAttrib = "boneIds";
     public const string Bone_WeightsAttrib = "weights";
@@ -354,7 +354,6 @@ float GetWeight(int i) {{
         return @$"
 #version 320 es
 
-#define MAX_BONES {MAX_BONES}
 #define MAX_BONE_INFLUENCE {MAX_BONE_INFLUENCE}
 
 layout(location = 0) in vec3 position;
@@ -370,7 +369,9 @@ out vec2 TexCoords;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 finalBonesMatrices[MAX_BONES];
+uniform sampler2D finalBonesMatrices;
+
+mat4 GetBoneMatrixByIndex(int index);
 
 void main() {{
     mat4 totalFinalBonesMatrice = mat4(0.0);
@@ -380,7 +381,7 @@ void main() {{
     if(boneIds[0] != -1) {{
 
         for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {{
-            totalFinalBonesMatrice += finalBonesMatrices[boneIds[i]] * weights[i];
+            totalFinalBonesMatrice += GetBoneMatrixByIndex(boneIds[i]) * weights[i];
         }}
 
         totalPosition = totalFinalBonesMatrice * totalPosition;
@@ -391,6 +392,13 @@ void main() {{
     Normal = mat3(transpose(inverse(model))) * totalNormal;
     FragPos = vec3(model * totalPosition);
     TexCoords = texCoords;
+}}
+
+mat4 GetBoneMatrixByIndex(int index) {{
+    return mat4(texelFetch(finalBonesMatrices, ivec2(0, index), 0),
+                texelFetch(finalBonesMatrices, ivec2(1, index), 0),
+                texelFetch(finalBonesMatrices, ivec2(2, index), 0),
+                texelFetch(finalBonesMatrices, ivec2(3, index), 0));
 }}
 ";
     }

@@ -1,21 +1,31 @@
 ﻿using Core.Helpers;
+using Core.Tools;
 using Silk.NET.Maths;
+using Silk.NET.OpenGLES;
 
 namespace Core.Models;
 
 public class Animator
 {
+    protected readonly GL _gl;
+
     private Animation? currentAnimation;
     private float currentTime;
     private float deltaTime;
 
     public Matrix4X4<float>[] FinalBoneMatrices { get; }
 
-    public Animator()
-    {
-        FinalBoneMatrices = new Matrix4X4<float>[ShaderHelper.MAX_BONES];
+    public Texture2D FinalBoneMatricesTexture { get; }
 
+    public Animator(GL gl)
+    {
+        _gl = gl;
+
+        FinalBoneMatrices = new Matrix4X4<float>[ShaderHelper.MAX_BONES];
         Array.Fill(FinalBoneMatrices, Matrix4X4<float>.Identity);
+
+        FinalBoneMatricesTexture = new Texture2D(_gl, GLEnum.Rgba32f, GLEnum.ClampToEdge);
+        FinalBoneMatricesTexture.WriteMatrixArray(FinalBoneMatrices);
     }
 
     public void PlayAnimation(Animation animation)
@@ -34,6 +44,8 @@ public class Animator
             currentTime %= currentAnimation.Duration;
 
             CalculateBoneTransform(currentAnimation.RootNode, Matrix4X4<float>.Identity);
+
+            FinalBoneMatricesTexture.WriteMatrixArray(FinalBoneMatrices);
         }
     }
 
