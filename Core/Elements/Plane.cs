@@ -37,7 +37,7 @@ public class Plane : BaseElement
             vertices[i].TexCoords.Y *= textureScale.Y;
         }
 
-        Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture2D(gl, GLEnum.Rgba8, GLEnum.Repeat), new Texture2D(gl, GLEnum.Rgba8, GLEnum.Repeat)) };
+        Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture2D(gl, GLEnum.Rgba, GLEnum.Repeat), new Texture2D(gl, GLEnum.Rgba, GLEnum.Repeat)) };
     }
 
     public Texture2D GetDiffuseTex()

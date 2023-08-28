@@ -60,7 +60,7 @@ public class Skybox : BaseElement
         };
         uint[] indices = vertices.Select((a, b) => (uint)b).ToArray();
 
-        Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture3D(gl, GLEnum.Rgba8, GLEnum.Repeat), new Texture3D(gl, GLEnum.Rgba8, GLEnum.Repeat)) };
+        Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture3D(gl, GLEnum.Rgba, GLEnum.Repeat), new Texture3D(gl, GLEnum.Rgba, GLEnum.Repeat)) };
     }
 
     public Texture3D GetDiffuseTex()
