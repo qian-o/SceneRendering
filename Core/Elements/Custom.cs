@@ -6,7 +6,6 @@ using Silk.NET.Assimp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using AssimpBone = Silk.NET.Assimp.Bone;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using CoreAnimation = Core.Models.Animation;
