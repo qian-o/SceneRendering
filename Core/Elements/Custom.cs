@@ -36,8 +36,6 @@ public unsafe class Custom : BaseElement
         _directory = Path.GetDirectoryName(path)!;
         _cache = new();
 
-        List<CoreMesh> meshes = new();
-
         PostProcessSteps flags = PostProcessSteps.Triangulate | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.FlipUVs;
 
         if (!isAnimation)
@@ -47,13 +45,22 @@ public unsafe class Custom : BaseElement
 
         Scene* scene = _assimp.ImportFile(path, (uint)flags);
 
-        ProcessNode(scene->MRootNode, scene, meshes);
-
-        Meshes = meshes.ToArray();
-
-        for (int i = 0; i < scene->MNumAnimations; i++)
+        if (scene != null)
         {
-            Animations.Add(new CoreAnimation(path, this, i));
+            List<CoreMesh> meshes = new();
+
+            ProcessNode(scene->MRootNode, scene, meshes);
+
+            Meshes = meshes.ToArray();
+
+            for (int i = 0; i < scene->MNumAnimations; i++)
+            {
+                Animations.Add(new CoreAnimation(scene, this, i));
+            }
+        }
+        else
+        {
+            Meshes = Array.Empty<CoreMesh>();
         }
 
         _assimp.Dispose();

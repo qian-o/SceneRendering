@@ -24,13 +24,11 @@ public unsafe class Animation
 
     public List<Bone> Bones { get; }
 
-    public Animation(string animationPath, Custom custom, int animationIndex)
+    public Animation(Scene* scene, Custom custom, int animationIndex)
     {
         _custom = custom;
 
         using Assimp importer = Assimp.GetApi();
-
-        Scene* scene = importer.ImportFile(animationPath, (uint)PostProcessSteps.Triangulate);
 
         AssimpAnimation* animation = scene->MAnimations[animationIndex];
 
