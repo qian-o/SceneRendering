@@ -8,7 +8,7 @@ public class VmdCameraFrame
 
     public float Distance { get; }
 
-    public Vector3D<float> Position { get;  }
+    public Vector3D<float> Position { get; }
 
     public Vector3D<float> Orientation { get; }
 

@@ -87,7 +87,7 @@ public class MikuMikuBone
 
         return Matrix4X4.CreateFromQuaternion(finalRotation);
     }
-    
+
     private int GetPositionIndex(float animationTime)
     {
         for (int i = 0; i < _numPositions - 1; i++)
