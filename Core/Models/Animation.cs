@@ -24,7 +24,7 @@ public unsafe class Animation
 
     public List<Bone> Bones { get; }
 
-    public Animation(Scene* scene, Custom custom, int animationIndex)
+    public Animation(Custom custom, Scene* scene, int animationIndex)
     {
         _custom = custom;
 

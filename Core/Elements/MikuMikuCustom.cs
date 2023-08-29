@@ -1,6 +1,7 @@
 ﻿using Core.Contracts.Elements;
 using Core.Helpers;
 using Core.Models;
+using Core.Models.MikuMikuDance;
 using Core.Tools;
 using Silk.NET.Assimp;
 using Silk.NET.Maths;
@@ -14,7 +15,7 @@ using Program = Core.Tools.Program;
 
 namespace Core.Elements;
 
-public unsafe class MikuMikuDance : BaseElement
+public unsafe class MikuMikuCustom : BaseElement
 {
     private readonly Assimp _assimp;
     private readonly string _directory;
@@ -24,7 +25,11 @@ public unsafe class MikuMikuDance : BaseElement
 
     public Dictionary<string, BoneInfo> BoneMapping { get; } = new Dictionary<string, BoneInfo>();
 
-    public MikuMikuDance(GL gl, string pmxPath, string? vmdPath = null) : base(gl)
+    public MikuMikuAnimation? Animation { get; }
+
+    public MikuMikuAnimator Animator { get; }
+
+    public MikuMikuCustom(GL gl, string pmxPath, string? vmdPath = null) : base(gl)
     {
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(pmxPath)!;
@@ -52,6 +57,13 @@ public unsafe class MikuMikuDance : BaseElement
             Meshes = Array.Empty<CoreMesh>();
         }
 
+        if (vmdPath != null)
+        {
+            Animation = new MikuMikuAnimation(this, scene, vmdPath);
+        }
+
+        Animator = new MikuMikuAnimator(_gl);
+
         _assimp.Dispose();
     }
 
@@ -72,6 +84,10 @@ public unsafe class MikuMikuDance : BaseElement
         {
             boneIds = (uint)program.GetAttrib(ShaderHelper.Bone_BoneIdsAttrib);
             weights = (uint)program.GetAttrib(ShaderHelper.Bone_WeightsAttrib);
+
+            _gl.ActiveTexture(GLEnum.Texture0);
+            Animator.FinalBoneMatricesTexture.Enable();
+            program.SetUniform(ShaderHelper.Bone_FinalBonesMatricesUniform, 0);
         }
 
         foreach (CoreMesh mesh in Meshes)

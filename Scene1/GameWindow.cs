@@ -28,6 +28,7 @@ public unsafe class GameWindow : Game
     private Custom kafka = null!;
     private Custom ark = null!;
     private Custom animationTest = null!;
+    private MikuMikuCustom mmd = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
     #endregion
@@ -88,7 +89,7 @@ public unsafe class GameWindow : Game
         };
         cube.GetDiffuseTex().WriteImage("Resources/Textures/container2.png");
 
-        kafka = new Custom(gl, @"Resources/Models/星穹铁道—卡芙卡无外套/kafka.obj")
+        kafka = new Custom(gl, "Resources/Models/星穹铁道—卡芙卡无外套/kafka.obj")
         {
             Transform = Matrix4X4.CreateTranslation(0.0f, 0.005f, -5.0f)
         };
@@ -101,9 +102,15 @@ public unsafe class GameWindow : Game
         animationTest = new Custom(gl, "Resources/Models/Vampire/dancing_vampire.dae", true)
         // animationTest = new Custom(gl, "Resources/Models/测试动画.fbx", true)
         {
-            Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
+            Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(-15.0f, 0.005f, -15.0f)
         };
         animationTest.Animator.PlayAnimation(animationTest.Animations[0]);
+
+        mmd = new(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx", "Resources/Models/大喜/动作数据/大喜MMD动作数据-喜鹊泠鸢专用版.vmd")
+        {
+            Transform = Matrix4X4.CreateScale(0.1f) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
+        };
+        mmd.Animator.PlayAnimation(mmd.Animation!);
 
         gaussianBlurFilter1 = new Plane(gl)
         {
@@ -115,8 +122,6 @@ public unsafe class GameWindow : Game
         {
             Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateScale(2.0f)
         };
-
-        MikuMikuDance mmd = new(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx", "Resources/Models/大喜/动作数据/大喜MMD动作数据-喜鹊泠鸢专用版.vmd");
     }
     protected override void Update(double obj)
     {
@@ -177,6 +182,9 @@ public unsafe class GameWindow : Game
 
             animationTest.Animator.UpdateAnimation((float)obj);
             animationTest.Draw(boneProgram);
+
+            mmd.Animator.UpdateAnimation((float)Time);
+            mmd.Draw(boneProgram);
 
             boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             boneProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);

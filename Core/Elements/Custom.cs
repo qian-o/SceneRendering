@@ -54,7 +54,7 @@ public unsafe class Custom : BaseElement
 
             for (int i = 0; i < scene->MNumAnimations; i++)
             {
-                Animations.Add(new CoreAnimation(scene, this, i));
+                Animations.Add(new CoreAnimation(this, scene, i));
             }
         }
         else

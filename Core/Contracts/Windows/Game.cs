@@ -36,6 +36,8 @@ public abstract class Game
 
     public int Height => _window.Size.Y;
 
+    public double Time => _window.Time;
+
     public Game()
     {
         _fpsSample = new List<double>();
