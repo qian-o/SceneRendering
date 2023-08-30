@@ -110,7 +110,6 @@ public unsafe class GameWindow : Game
         {
             Transform = Matrix4X4.CreateScale(0.1f) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
         };
-        mmd.Animator.PlayAnimation(mmd.Animation!);
 
         gaussianBlurFilter1 = new Plane(gl)
         {
@@ -183,7 +182,6 @@ public unsafe class GameWindow : Game
             animationTest.Animator.UpdateAnimation((float)obj);
             animationTest.Draw(boneProgram);
 
-            mmd.Animator.UpdateAnimation((float)Time);
             mmd.Draw(boneProgram);
 
             boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);

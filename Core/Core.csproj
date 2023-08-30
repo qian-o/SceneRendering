@@ -261,6 +261,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Models\MikuMikuDance\" />
 		<Folder Include="Resources\Models\大喜\模型\登门喜鹊泠鸢yousa-ver2.0\toon\" />
 	</ItemGroup>
 
