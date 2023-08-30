@@ -15,7 +15,7 @@ using Program = Core.Tools.Program;
 
 namespace Core.Elements;
 
-public unsafe class Custom : BaseElement
+public unsafe class Model : BaseElement
 {
     private readonly Assimp _assimp;
     private readonly string _directory;
@@ -29,7 +29,7 @@ public unsafe class Custom : BaseElement
 
     public Animator Animator { get; }
 
-    public Custom(GL gl, string path, bool isAnimation = false) : base(gl)
+    public Model(GL gl, string path, bool isAnimation = false) : base(gl)
     {
         _assimp = Assimp.GetApi();
         _directory = Path.GetDirectoryName(path)!;

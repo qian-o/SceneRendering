@@ -5,13 +5,13 @@ using Program = Core.Tools.Program;
 
 namespace Core.Elements;
 
-public unsafe class MikuMikuCustom : BaseElement
+public unsafe class MikuMikuModel : BaseElement
 {
     public override Mesh[] Meshes { get; }
 
-    public MikuMikuCustom(GL gl, string pmxPath, string? vmdPath = null) : base(gl)
+    public MikuMikuModel(GL gl, string pmxPath, string? vmdPath = null) : base(gl)
     {
-
+        Meshes = Array.Empty<Mesh>();
     }
 
     public override void Draw(Program program)
