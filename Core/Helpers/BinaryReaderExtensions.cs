@@ -66,4 +66,9 @@ public static unsafe class BinaryReaderExtensions
     {
         return new(binaryReader.ReadSingle(), binaryReader.ReadSingle(), binaryReader.ReadSingle(), binaryReader.ReadSingle());
     }
+
+    public static Quaternion<float> ReadQuaternion(this BinaryReader binaryReader)
+    {
+        return new(binaryReader.ReadSingle(), binaryReader.ReadSingle(), binaryReader.ReadSingle(), binaryReader.ReadSingle());
+    }
 }
