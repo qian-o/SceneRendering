@@ -8,7 +8,7 @@ namespace Core.Models;
 
 public unsafe class Animation
 {
-    private readonly Custom _custom;
+    private readonly Model _model;
 
     public string Name { get; }
 
@@ -20,13 +20,13 @@ public unsafe class Animation
 
     public Matrix4X4<float> GlobalInverseTransform { get; }
 
-    public Dictionary<string, BoneInfo> BoneMapping => _custom.BoneMapping;
+    public Dictionary<string, BoneInfo> BoneMapping => _model.BoneMapping;
 
     public List<Bone> Bones { get; }
 
-    public Animation(Scene* scene, Custom custom, int animationIndex)
+    public Animation(Model model, Scene* scene, int animationIndex)
     {
-        _custom = custom;
+        _model = model;
 
         using Assimp importer = Assimp.GetApi();
 
