@@ -566,19 +566,19 @@ public struct Softbody
 
     public float SS_SPLT_CL;
 
-    public float V_IT;
+    public int V_IT;
 
-    public float P_IT;
+    public int P_IT;
 
-    public float D_IT;
+    public int D_IT;
 
-    public float C_IT;
+    public int C_IT;
 
-    public int LST;
+    public float LST;
 
-    public int AST;
+    public float AST;
 
-    public int VST;
+    public float VST;
 
     public AnchorRigidbody[] AnchorRigidbodies;
 
@@ -625,6 +625,13 @@ public unsafe class PMXFile
         ReadBone(this, binaryReader);
         ReadMorph(this, binaryReader);
         ReadDisplayFrame(this, binaryReader);
+        ReadRigidbody(this, binaryReader);
+        ReadJoint(this, binaryReader);
+
+        if (binaryReader.BaseStream.Position < binaryReader.BaseStream.Length)
+        {
+            ReadSoftbody(this, binaryReader);
+        }
     }
 
     private static void ReadHeader(PMXFile pmx, BinaryReader binaryReader)
@@ -1092,6 +1099,139 @@ public unsafe class PMXFile
 
                 displayFrame.Targets[j] = target;
             }
+        }
+    }
+
+    private static void ReadRigidbody(PMXFile pmx, BinaryReader binaryReader)
+    {
+        int rigidbodyCount = binaryReader.ReadInt32();
+        pmx.Rigidbodies.Resize(rigidbodyCount);
+
+        for (int i = 0; i < rigidbodyCount; i++)
+        {
+            Rigidbody rigidbody = new()
+            {
+                Name = binaryReader.ReadString(pmx.Header.Encoding),
+                NameEn = binaryReader.ReadString(pmx.Header.Encoding),
+                BoneIndex = binaryReader.ReadIndex(pmx.Header.BoneIndexSize),
+                Group = binaryReader.ReadByte(),
+                CollisionGroup = binaryReader.ReadUInt16(),
+                Shape = (Shape)binaryReader.ReadByte(),
+                ShapeSize = binaryReader.ReadVector3D(),
+                Translate = binaryReader.ReadVector3D(),
+                Rotate = binaryReader.ReadVector3D(),
+                Mass = binaryReader.ReadSingle(),
+                TranslateDimmer = binaryReader.ReadSingle(),
+                RotateDimmer = binaryReader.ReadSingle(),
+                Repulsion = binaryReader.ReadSingle(),
+                Friction = binaryReader.ReadSingle(),
+                Op = (Operation)binaryReader.ReadByte()
+            };
+
+            pmx.Rigidbodies[i] = rigidbody;
+        }
+    }
+
+    private static void ReadJoint(PMXFile pmx, BinaryReader binaryReader)
+    {
+        int jointCount = binaryReader.ReadInt32();
+        pmx.Joints.Resize(jointCount);
+
+        for (int i = 0; i < jointCount; i++)
+        {
+            Joint joint = new()
+            {
+                Name = binaryReader.ReadString(pmx.Header.Encoding),
+                NameEn = binaryReader.ReadString(pmx.Header.Encoding),
+                Type = (JointType)binaryReader.ReadByte(),
+                RigidBodyIndexA = binaryReader.ReadIndex(pmx.Header.RigidBodyIndexSize),
+                RigidBodyIndexB = binaryReader.ReadIndex(pmx.Header.RigidBodyIndexSize),
+                Translate = binaryReader.ReadVector3D(),
+                Rotate = binaryReader.ReadVector3D(),
+                TranslateLimitMin = binaryReader.ReadVector3D(),
+                TranslateLimitMax = binaryReader.ReadVector3D(),
+                RotateLimitMin = binaryReader.ReadVector3D(),
+                RotateLimitMax = binaryReader.ReadVector3D(),
+                SpringTranslate = binaryReader.ReadVector3D(),
+                SpringRotate = binaryReader.ReadVector3D()
+            };
+
+            pmx.Joints[i] = joint;
+        }
+    }
+
+    private static void ReadSoftbody(PMXFile pmx, BinaryReader binaryReader)
+    {
+        int softbodyCount = binaryReader.ReadInt32();
+        pmx.Softbodies.Resize(softbodyCount);
+
+        for (int i = 0; i < softbodyCount; i++)
+        {
+            Softbody softbody = new()
+            {
+                Name = binaryReader.ReadString(pmx.Header.Encoding),
+                NameEn = binaryReader.ReadString(pmx.Header.Encoding),
+                Type = (SoftbodyType)binaryReader.ReadByte(),
+                MaterialIndex = binaryReader.ReadIndex(pmx.Header.MaterialIndexSize),
+                Group = binaryReader.ReadByte(),
+                CollisionGroup = binaryReader.ReadUInt16(),
+                Flag = (SoftbodyMask)binaryReader.ReadByte(),
+                BLinkLength = binaryReader.ReadInt32(),
+                NumClusters = binaryReader.ReadInt32(),
+                TotalMass = binaryReader.ReadSingle(),
+                CollisionMargin = binaryReader.ReadSingle(),
+                AeroModel = (AeroModel)binaryReader.ReadInt32(),
+                VCF = binaryReader.ReadSingle(),
+                DP = binaryReader.ReadSingle(),
+                DG = binaryReader.ReadSingle(),
+                LF = binaryReader.ReadSingle(),
+                PR = binaryReader.ReadSingle(),
+                VC = binaryReader.ReadSingle(),
+                DF = binaryReader.ReadSingle(),
+                MT = binaryReader.ReadSingle(),
+                CHR = binaryReader.ReadSingle(),
+                KHR = binaryReader.ReadSingle(),
+                SHR = binaryReader.ReadSingle(),
+                AHR = binaryReader.ReadSingle(),
+                SRHR_CL = binaryReader.ReadSingle(),
+                SKHR_CL = binaryReader.ReadSingle(),
+                SSHR_CL = binaryReader.ReadSingle(),
+                SR_SPLT_CL = binaryReader.ReadSingle(),
+                SK_SPLT_CL = binaryReader.ReadSingle(),
+                SS_SPLT_CL = binaryReader.ReadSingle(),
+                V_IT = binaryReader.ReadInt32(),
+                P_IT = binaryReader.ReadInt32(),
+                D_IT = binaryReader.ReadInt32(),
+                C_IT = binaryReader.ReadInt32(),
+                LST = binaryReader.ReadSingle(),
+                AST = binaryReader.ReadSingle(),
+                VST = binaryReader.ReadSingle()
+            };
+
+            int anchorCount = binaryReader.ReadInt32();
+            Array.Resize(ref softbody.AnchorRigidbodies, anchorCount);
+
+            for (int j = 0; j < anchorCount; j++)
+            {
+                AnchorRigidbody anchorRigidbody = new()
+                {
+                    RigidBodyIndex = binaryReader.ReadIndex(pmx.Header.RigidBodyIndexSize),
+                    VertexIndex = binaryReader.ReadIndex(pmx.Header.VertexIndexSize),
+                    NearMode = binaryReader.ReadBoolean()
+                };
+
+                softbody.AnchorRigidbodies[j] = anchorRigidbody;
+            }
+
+            int pvCount = binaryReader.ReadInt32();
+            Array.Resize(ref softbody.PinVertexIndices, pvCount);
+
+            for (int j = 0; j < pvCount; j++)
+            {
+                softbody.PinVertexIndices[j] = binaryReader.ReadIndex(pmx.Header.VertexIndexSize);
+            }
+
+            pmx.Softbodies[i] = softbody;
         }
     }
 }
