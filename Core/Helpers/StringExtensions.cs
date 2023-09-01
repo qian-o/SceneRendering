@@ -2,11 +2,11 @@
 
 namespace Core.Helpers;
 
-public static class StringExtensions
+public static unsafe class StringExtensions
 {
     private static readonly Dictionary<EncodingType, Encoding> _encodings = new();
 
-    public static string Decode(this byte[] buffer, EncodingType encodingType = EncodingType.UTF8, int? length = null)
+    public static string ToString(this byte[] buffer, EncodingType encodingType = EncodingType.UTF8, int? length = null)
     {
         Encoding encoding = GetEncoding(encodingType);
 
@@ -27,7 +27,6 @@ public static class StringExtensions
             encoding = encodingType switch
             {
                 EncodingType.UTF8 => Encoding.UTF8,
-                EncodingType.UTF16 => Encoding.Unicode,
                 EncodingType.UTF32 => Encoding.UTF32,
                 EncodingType.ASCII => Encoding.ASCII,
                 EncodingType.BigEndianUnicode => Encoding.BigEndianUnicode,
