@@ -1,7 +1,7 @@
 ﻿using Core.Helpers;
 using Silk.NET.Maths;
 
-namespace Core.Models.MikuMikuDance;
+namespace Core.Models.MikuMikuDance.PMX;
 
 #region Enums
 public enum VertexWeight : byte
