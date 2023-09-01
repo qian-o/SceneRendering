@@ -97,6 +97,51 @@ public enum FrameType : byte
     DefaultFrame,
     SpecialFrame
 }
+
+public enum Shape : byte
+{
+    Sphere,
+    Box,
+    Capsule
+}
+
+public enum Operation : byte
+{
+    Static,
+    Dynamic,
+    DynamicAndBoneMerge
+}
+
+public enum JointType : byte
+{
+    SpringDOF6,
+    DOF6,
+    P2P,
+    ConeTwist,
+    Slider,
+    Hinge
+}
+
+public enum SoftbodyType : byte
+{
+    TriMesh,
+    Rope
+}
+
+public enum SoftbodyMask : byte
+{
+    BLink = 0x01,
+    Cluster = 0x02,
+    HybridLink = 0x04
+}
+
+public enum AeroModel
+{
+    V_TwoSided,
+    V_OneSided,
+    F_TwoSided,
+    F_OneSided
+}
 #endregion
 
 #region Structs
@@ -387,6 +432,158 @@ public struct DisplayFrame
 
     public Target[] Targets;
 }
+
+public struct Rigidbody
+{
+    public string Name;
+
+    public string NameEn;
+
+    public int BoneIndex;
+
+    public byte Group;
+
+    public ushort CollisionGroup;
+
+    public Shape Shape;
+
+    public Vector3D<float> ShapeSize;
+
+    public Vector3D<float> Translate;
+
+    public Vector3D<float> Rotate;
+
+    public float Mass;
+
+    public float TranslateDimmer;
+
+    public float RotateDimmer;
+
+    public float Repulsion;
+
+    public float Friction;
+
+    public Operation Op;
+}
+
+public struct Joint
+{
+    public string Name;
+
+    public string NameEn;
+
+    public JointType Type;
+
+    public int RigidBodyIndexA;
+
+    public int RigidBodyIndexB;
+
+    public Vector3D<float> Translate;
+
+    public Vector3D<float> Rotate;
+
+    public Vector3D<float> TranslateLimitMin;
+
+    public Vector3D<float> TranslateLimitMax;
+
+    public Vector3D<float> RotateLimitMin;
+
+    public Vector3D<float> RotateLimitMax;
+
+    public Vector3D<float> SpringTranslate;
+
+    public Vector3D<float> SpringRotate;
+}
+
+public struct AnchorRigidbody
+{
+    public int RigidBodyIndex;
+
+    public int VertexIndex;
+
+    public bool NearMode;
+}
+
+public struct Softbody
+{
+    public string Name;
+
+    public string NameEn;
+
+    public SoftbodyType Type;
+
+    public int MaterialIndex;
+
+    public byte Group;
+
+    public ushort CollisionGroup;
+
+    public SoftbodyMask Flag;
+
+    public int BLinkLength;
+
+    public int NumClusters;
+
+    public float TotalMass;
+
+    public float CollisionMargin;
+
+    public AeroModel AeroModel;
+
+    public float VCF;
+
+    public float DP;
+
+    public float DG;
+
+    public float LF;
+
+    public float PR;
+
+    public float VC;
+
+    public float DF;
+
+    public float MT;
+
+    public float CHR;
+
+    public float KHR;
+
+    public float SHR;
+
+    public float AHR;
+
+    public float SRHR_CL;
+
+    public float SKHR_CL;
+
+    public float SSHR_CL;
+
+    public float SR_SPLT_CL;
+
+    public float SK_SPLT_CL;
+
+    public float SS_SPLT_CL;
+
+    public float V_IT;
+
+    public float P_IT;
+
+    public float D_IT;
+
+    public float C_IT;
+
+    public int LST;
+
+    public int AST;
+
+    public int VST;
+
+    public AnchorRigidbody[] AnchorRigidbodies;
+
+    public int[] PinVertexIndices;
+}
 #endregion
 
 public unsafe class PMXFile
@@ -408,6 +605,12 @@ public unsafe class PMXFile
     public List<Morph> Morphs { get; } = new List<Morph>();
 
     public List<DisplayFrame> DisplayFrames { get; } = new List<DisplayFrame>();
+
+    public List<Rigidbody> Rigidbodies { get; } = new List<Rigidbody>();
+
+    public List<Joint> Joints { get; } = new List<Joint>();
+
+    public List<Softbody> Softbodies { get; } = new List<Softbody>();
 
     public PMXFile(string file)
     {
