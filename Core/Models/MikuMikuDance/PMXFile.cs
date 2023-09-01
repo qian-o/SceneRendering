@@ -85,6 +85,18 @@ public enum OpType : byte
     Mul,
     Add
 }
+
+public enum TargetType : byte
+{
+    BoneIndex,
+    MorphIndex
+}
+
+public enum FrameType : byte
+{
+    DefaultFrame,
+    SpecialFrame
+}
 #endregion
 
 #region Structs
@@ -357,6 +369,24 @@ public struct Morph
 
     public ImpulseMorph[] ImpulseMorphs;
 }
+
+public struct Target
+{
+    public TargetType Type;
+
+    public int Index;
+}
+
+public struct DisplayFrame
+{
+    public string Name;
+
+    public string NameEn;
+
+    public FrameType Flag;
+
+    public Target[] Targets;
+}
 #endregion
 
 public unsafe class PMXFile
@@ -377,18 +407,21 @@ public unsafe class PMXFile
 
     public List<Morph> Morphs { get; } = new List<Morph>();
 
+    public List<DisplayFrame> DisplayFrames { get; } = new List<DisplayFrame>();
+
     public PMXFile(string file)
     {
         using BinaryReader binaryReader = new(File.OpenRead(file));
 
         ReadHeader(this, binaryReader);
         ReadInfo(this, binaryReader);
-        ReadVertices(this, binaryReader);
-        ReadFaces(this, binaryReader);
-        ReadTextures(this, binaryReader);
-        ReadMaterials(this, binaryReader);
-        ReadBones(this, binaryReader);
-        ReadMorphs(this, binaryReader);
+        ReadVertex(this, binaryReader);
+        ReadFace(this, binaryReader);
+        ReadTexture(this, binaryReader);
+        ReadMaterial(this, binaryReader);
+        ReadBone(this, binaryReader);
+        ReadMorph(this, binaryReader);
+        ReadDisplayFrame(this, binaryReader);
     }
 
     private static void ReadHeader(PMXFile pmx, BinaryReader binaryReader)
@@ -424,7 +457,7 @@ public unsafe class PMXFile
         pmx.Info = info;
     }
 
-    private static void ReadVertices(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadVertex(PMXFile pmx, BinaryReader binaryReader)
     {
         int vertexCount = binaryReader.ReadInt32();
         pmx.Vertices.Resize(vertexCount);
@@ -492,7 +525,7 @@ public unsafe class PMXFile
         }
     }
 
-    private static void ReadFaces(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadFace(PMXFile pmx, BinaryReader binaryReader)
     {
         int faceCount = binaryReader.ReadInt32() / 3;
         pmx.Faces.Resize(faceCount);
@@ -545,7 +578,7 @@ public unsafe class PMXFile
         }
     }
 
-    private static void ReadTextures(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadTexture(PMXFile pmx, BinaryReader binaryReader)
     {
         int textureCount = binaryReader.ReadInt32();
         pmx.Textures.Resize(textureCount);
@@ -561,7 +594,7 @@ public unsafe class PMXFile
         }
     }
 
-    private static void ReadMaterials(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadMaterial(PMXFile pmx, BinaryReader binaryReader)
     {
         int materialCount = binaryReader.ReadInt32();
         pmx.Materials.Resize(materialCount);
@@ -604,7 +637,7 @@ public unsafe class PMXFile
         }
     }
 
-    private static void ReadBones(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadBone(PMXFile pmx, BinaryReader binaryReader)
     {
         int boneCount = binaryReader.ReadInt32();
         pmx.Bones.Resize(boneCount);
@@ -663,14 +696,19 @@ public unsafe class PMXFile
                 Array.Resize(ref bone.IKLinks, ikLinkCount);
                 for (int j = 0; j < ikLinkCount; j++)
                 {
-                    bone.IKLinks[j].BoneIndex = binaryReader.ReadIndex(pmx.Header.BoneIndexSize);
-                    bone.IKLinks[j].EnableLimit = binaryReader.ReadBoolean();
-
-                    if (bone.IKLinks[j].EnableLimit)
+                    IKLink iKLink = new()
                     {
-                        bone.IKLinks[j].LowerLimit = binaryReader.ReadVector3D();
-                        bone.IKLinks[j].UpperLimit = binaryReader.ReadVector3D();
+                        BoneIndex = binaryReader.ReadIndex(pmx.Header.BoneIndexSize),
+                        EnableLimit = binaryReader.ReadBoolean()
+                    };
+
+                    if (iKLink.EnableLimit)
+                    {
+                        iKLink.LowerLimit = binaryReader.ReadVector3D();
+                        iKLink.UpperLimit = binaryReader.ReadVector3D();
                     }
+
+                    bone.IKLinks[j] = iKLink;
                 }
             }
 
@@ -678,7 +716,7 @@ public unsafe class PMXFile
         }
     }
 
-    private static void ReadMorphs(PMXFile pmx, BinaryReader binaryReader)
+    private static void ReadMorph(PMXFile pmx, BinaryReader binaryReader)
     {
         int morphCount = binaryReader.ReadInt32();
         pmx.Morphs.Resize(morphCount);
@@ -700,8 +738,13 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.PositionMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.PositionMorphs[j].VertexIndex = binaryReader.ReadIndex(pmx.Header.VertexIndexSize);
-                    morph.PositionMorphs[j].Position = binaryReader.ReadVector3D();
+                    PositionMorph positionMorph = new()
+                    {
+                        VertexIndex = binaryReader.ReadIndex(pmx.Header.VertexIndexSize),
+                        Position = binaryReader.ReadVector3D()
+                    };
+
+                    morph.PositionMorphs[j] = positionMorph;
                 }
             }
             else if (morph.MorphType is MorphType.UV
@@ -713,8 +756,13 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.UVMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.UVMorphs[j].VertexIndex = binaryReader.ReadIndex(pmx.Header.VertexIndexSize);
-                    morph.UVMorphs[j].UV = binaryReader.ReadVector4D();
+                    UVMorph uVMorph = new()
+                    {
+                        VertexIndex = binaryReader.ReadIndex(pmx.Header.VertexIndexSize),
+                        UV = binaryReader.ReadVector4D()
+                    };
+
+                    morph.UVMorphs[j] = uVMorph;
                 }
             }
             else if (morph.MorphType == MorphType.Bone)
@@ -722,9 +770,14 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.BoneMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.BoneMorphs[j].BoneIndex = binaryReader.ReadIndex(pmx.Header.BoneIndexSize);
-                    morph.BoneMorphs[j].Position = binaryReader.ReadVector3D();
-                    morph.BoneMorphs[j].Quaternion = binaryReader.ReadQuaternion();
+                    BoneMorph boneMorph = new()
+                    {
+                        BoneIndex = binaryReader.ReadIndex(pmx.Header.BoneIndexSize),
+                        Position = binaryReader.ReadVector3D(),
+                        Quaternion = binaryReader.ReadQuaternion()
+                    };
+
+                    morph.BoneMorphs[j] = boneMorph;
                 }
             }
             else if (morph.MorphType == MorphType.Material)
@@ -732,17 +785,22 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.MaterialMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.MaterialMorphs[j].MaterialIndex = binaryReader.ReadIndex(pmx.Header.MaterialIndexSize);
-                    morph.MaterialMorphs[j].OpType = (OpType)binaryReader.ReadByte();
-                    morph.MaterialMorphs[j].Diffuse = binaryReader.ReadVector4D();
-                    morph.MaterialMorphs[j].Specular = binaryReader.ReadVector3D();
-                    morph.MaterialMorphs[j].SpecularPower = binaryReader.ReadSingle();
-                    morph.MaterialMorphs[j].Ambient = binaryReader.ReadVector3D();
-                    morph.MaterialMorphs[j].EdgeColor = binaryReader.ReadVector4D();
-                    morph.MaterialMorphs[j].EdgeSize = binaryReader.ReadSingle();
-                    morph.MaterialMorphs[j].TextureCoefficient = binaryReader.ReadVector4D();
-                    morph.MaterialMorphs[j].SphereTextureCoefficient = binaryReader.ReadVector4D();
-                    morph.MaterialMorphs[j].ToonTextureCoefficient = binaryReader.ReadVector4D();
+                    MaterialMorph materialMorph = new()
+                    {
+                        MaterialIndex = binaryReader.ReadIndex(pmx.Header.MaterialIndexSize),
+                        OpType = (OpType)binaryReader.ReadByte(),
+                        Diffuse = binaryReader.ReadVector4D(),
+                        Specular = binaryReader.ReadVector3D(),
+                        SpecularPower = binaryReader.ReadSingle(),
+                        Ambient = binaryReader.ReadVector3D(),
+                        EdgeColor = binaryReader.ReadVector4D(),
+                        EdgeSize = binaryReader.ReadSingle(),
+                        TextureCoefficient = binaryReader.ReadVector4D(),
+                        SphereTextureCoefficient = binaryReader.ReadVector4D(),
+                        ToonTextureCoefficient = binaryReader.ReadVector4D()
+                    };
+
+                    morph.MaterialMorphs[j] = materialMorph;
                 }
             }
             else if (morph.MorphType == MorphType.Group)
@@ -750,8 +808,13 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.GroupMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.GroupMorphs[j].MorphIndex = binaryReader.ReadIndex(pmx.Header.MorphIndexSize);
-                    morph.GroupMorphs[j].Weight = binaryReader.ReadSingle();
+                    GroupMorph groupMorph = new()
+                    {
+                        MorphIndex = binaryReader.ReadIndex(pmx.Header.MorphIndexSize),
+                        Weight = binaryReader.ReadSingle()
+                    };
+
+                    morph.GroupMorphs[j] = groupMorph;
                 }
             }
             else if (morph.MorphType == MorphType.Flip)
@@ -759,8 +822,13 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.FlipMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.FlipMorphs[j].MorphIndex = binaryReader.ReadIndex(pmx.Header.MorphIndexSize);
-                    morph.FlipMorphs[j].Weight = binaryReader.ReadSingle();
+                    FlipMorph flipMorph = new()
+                    {
+                        MorphIndex = binaryReader.ReadIndex(pmx.Header.MorphIndexSize),
+                        Weight = binaryReader.ReadSingle()
+                    };
+
+                    morph.FlipMorphs[j] = flipMorph;
                 }
             }
             else if (morph.MorphType == MorphType.Impluse)
@@ -768,10 +836,15 @@ public unsafe class PMXFile
                 Array.Resize(ref morph.ImpulseMorphs, dataCount);
                 for (int j = 0; j < dataCount; j++)
                 {
-                    morph.ImpulseMorphs[j].RigidBodyIndex = binaryReader.ReadIndex(pmx.Header.RigidBodyIndexSize);
-                    morph.ImpulseMorphs[j].LocalFlag = binaryReader.ReadBoolean();
-                    morph.ImpulseMorphs[j].Velocity = binaryReader.ReadVector3D();
-                    morph.ImpulseMorphs[j].Torque = binaryReader.ReadVector3D();
+                    ImpulseMorph impulseMorph = new()
+                    {
+                        RigidBodyIndex = binaryReader.ReadIndex(pmx.Header.RigidBodyIndexSize),
+                        LocalFlag = binaryReader.ReadBoolean(),
+                        Velocity = binaryReader.ReadVector3D(),
+                        Torque = binaryReader.ReadVector3D()
+                    };
+
+                    morph.ImpulseMorphs[j] = impulseMorph;
                 }
             }
             else
@@ -780,6 +853,42 @@ public unsafe class PMXFile
             }
 
             pmx.Morphs[i] = morph;
+        }
+    }
+
+    private static void ReadDisplayFrame(PMXFile pmx, BinaryReader binaryReader)
+    {
+        int displayFrameCount = binaryReader.ReadInt32();
+        pmx.DisplayFrames.Resize(displayFrameCount);
+
+        for (int i = 0; i < displayFrameCount; i++)
+        {
+            DisplayFrame displayFrame = new()
+            {
+                Name = binaryReader.ReadString(pmx.Header.Encoding),
+                NameEn = binaryReader.ReadString(pmx.Header.Encoding),
+                Flag = (FrameType)binaryReader.ReadByte()
+            };
+
+            int targetCount = binaryReader.ReadInt32();
+            Array.Resize(ref displayFrame.Targets, targetCount);
+
+            for (int j = 0; j < targetCount; j++)
+            {
+                Target target = new()
+                {
+                    Type = (TargetType)binaryReader.ReadByte()
+                };
+
+                target.Index = target.Type switch
+                {
+                    TargetType.BoneIndex => binaryReader.ReadIndex(pmx.Header.BoneIndexSize),
+                    TargetType.MorphIndex => binaryReader.ReadIndex(pmx.Header.MorphIndexSize),
+                    _ => throw new NotSupportedException(),
+                };
+
+                displayFrame.Targets[j] = target;
+            }
         }
     }
 }
