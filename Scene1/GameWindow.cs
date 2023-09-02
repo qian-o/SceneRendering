@@ -122,6 +122,7 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateRotationX(MathHelper.DegreesToRadians(90.0f)) * Matrix4X4.CreateScale(2.0f)
         };
     }
+
     protected override void Update(double obj)
     {
     }
