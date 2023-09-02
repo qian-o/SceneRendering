@@ -1,4 +1,5 @@
-﻿using Core.Tools;
+﻿using Core.Helpers;
+using Core.Tools;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -43,7 +44,7 @@ public abstract class Game
         _fpsSample = new List<double>();
 
         WindowOptions windowOptions = WindowOptions.Default;
-        windowOptions.API = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(3, 2));
+        windowOptions.API = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(ShaderHelper.Major, ShaderHelper.Minor));
         windowOptions.Samples = 8;
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 32;

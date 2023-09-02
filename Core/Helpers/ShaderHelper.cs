@@ -2,6 +2,9 @@
 
 public static class ShaderHelper
 {
+    public const int Major = 3;
+    public const int Minor = 2;
+
     // mvp.vert
     public const string MVP_PositionAttrib = "position";
     public const string MVP_NormalAttrib = "normal";
@@ -43,7 +46,7 @@ public static class ShaderHelper
     public static string GetMVP_VertexShader()
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -71,7 +74,7 @@ void main() {{
         string da = "    if(texColor.a < 0.1)\r\n        discard;";
 
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 precision highp float;
 
@@ -94,7 +97,7 @@ void main() {{
     public static string GetLighting_FragmentShader(uint pointLights)
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 #define NR_POINT_LIGHTS {pointLights}
 
@@ -251,7 +254,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     public static string GetSkybox_VertexShader()
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 layout(location = 0) in vec3 position;
 
@@ -270,7 +273,7 @@ void main() {{
     public static string GetSkybox_FragmentShader()
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 precision highp float;
 
@@ -289,7 +292,7 @@ void main() {{
     public static string GetGaussianBlur_FragmentShader()
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 precision highp float;
 
@@ -352,7 +355,7 @@ float GetWeight(int i) {{
     public static string GetBone_VertexShader()
     {
         return @$"
-#version 320 es
+#version {Major}{Minor}0 es
 
 #define MAX_BONE_INFLUENCE {MAX_BONE_INFLUENCE}
 
