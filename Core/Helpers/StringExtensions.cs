@@ -20,7 +20,7 @@ public static unsafe class StringExtensions
         }
     }
 
-    private static Encoding GetEncoding(EncodingType encodingType)
+    public static Encoding GetEncoding(this EncodingType encodingType)
     {
         if (!_encodings.TryGetValue(encodingType, out Encoding? encoding))
         {
