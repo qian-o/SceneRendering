@@ -1,4 +1,5 @@
-﻿using Silk.NET.Maths;
+﻿using Core.Helpers;
+using Silk.NET.Maths;
 
 namespace Core.Contracts.Models.MikuMikuDance;
 
@@ -164,8 +165,7 @@ public unsafe abstract class MMDNode
 
     public void CalculateInverseInitTransform()
     {
-        Matrix4X4.Invert(global, out Matrix4X4<float> result);
-        inverseInit = result;
+        inverseInit = global.Invert();
     }
 
     public void SaveInitialTRS()

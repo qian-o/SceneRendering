@@ -10,4 +10,11 @@ public static class MatrixExtensions
 
         return result;
     }
+
+    public static Quaternion<T> GetRotation<T>(this Matrix3X3<T> matrix) where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T>
+    {
+        Matrix3X3.Decompose(matrix, out _, out Quaternion<T> rotation);
+
+        return rotation;
+    }
 }
