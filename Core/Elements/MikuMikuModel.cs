@@ -35,5 +35,8 @@ public unsafe class MikuMikuModel : BaseElement
 
     public override void Draw(Program program)
     {
+        _ = _pmx;
+        _ = _vmd;
+        _ = _vpd;
     }
 }

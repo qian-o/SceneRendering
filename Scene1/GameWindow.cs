@@ -190,6 +190,7 @@ public unsafe class GameWindow : Game
             animationTest.Draw(boneProgram);
 
             mmd1.Draw(boneProgram);
+            mmd2.Draw(boneProgram);
 
             boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             boneProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
