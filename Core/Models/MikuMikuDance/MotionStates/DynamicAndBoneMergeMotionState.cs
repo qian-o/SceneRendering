@@ -6,10 +6,10 @@ namespace Core.Models.MikuMikuDance.MotionStates;
 
 public class DynamicAndBoneMergeMotionState : MMDMotionState
 {
-    private MMDNode _node;
-    private Matrix4X4<float> _offset;
-    private Matrix4X4<float> _invOffset;
-    private bool _override;
+    private readonly MMDNode _node;
+    private readonly Matrix4X4<float> _offset;
+    private readonly Matrix4X4<float> _invOffset;
+    private readonly bool _override;
     private Matrix4x4 transform;
 
     public DynamicAndBoneMergeMotionState(MMDNode node, Matrix4X4<float> offset, bool @override = true)
@@ -24,7 +24,7 @@ public class DynamicAndBoneMergeMotionState : MMDMotionState
 
     public override void Reset()
     {
-        transform = Matrix4X4.Transpose((_offset * _node.GlobalTransform).InvZ()).ToBulletMatrix();
+        transform = Matrix4X4.Transpose((_offset * _node.GlobalTransform).InvZ()).ToBulletMatrix4x4();
     }
 
     public override void ReflectGlobalTransform()

@@ -37,6 +37,8 @@ public class MMDRigidBody
 
     public ushort GroupMask => groupMask;
 
+    public string Name => name;
+
     public MMDRigidBody()
     {
         shape = null;
@@ -178,6 +180,67 @@ public class MMDRigidBody
 
     public void Destroy()
     {
+        shape?.Dispose();
         shape = null;
+    }
+
+    public void SetActivation(bool activation)
+    {
+        if (rigidBodyType != RigidBodyType.Kinematic)
+        {
+            if (activation)
+            {
+                rigidBody!.CollisionFlags &= ~CollisionFlags.KinematicObject;
+                rigidBody.MotionState = activeMotionState;
+            }
+            else
+            {
+                rigidBody!.CollisionFlags |= CollisionFlags.KinematicObject;
+                rigidBody.MotionState = kinematicMotionState;
+            }
+        }
+        else
+        {
+            rigidBody!.MotionState = kinematicMotionState;
+        }
+    }
+
+    public void ResetTransform()
+    {
+        activeMotionState?.Reset();
+    }
+
+    public void Reset(MMDPhysics physics)
+    {
+
+    }
+
+    public void ReflectGlobalTransform()
+    {
+        activeMotionState?.ReflectGlobalTransform();
+
+        kinematicMotionState?.ReflectGlobalTransform();
+    }
+
+    public void CalcLocalTransform()
+    {
+        if (node != null)
+        {
+            MMDNode? parent = node.Parent;
+            if (parent != null)
+            {
+                Matrix4X4<float> local = node.GlobalTransform * parent.GlobalTransform.Invert();
+                node.LocalTransform = local;
+            }
+            else
+            {
+                node.LocalTransform = node.GlobalTransform;
+            }
+        }
+    }
+
+    public Matrix4X4<float> GetTransform()
+    {
+        return Matrix4X4.Transpose(rigidBody!.CenterOfMassTransform.ToMatrix()).InvZ();
     }
 }

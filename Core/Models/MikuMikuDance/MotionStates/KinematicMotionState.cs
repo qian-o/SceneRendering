@@ -37,7 +37,7 @@ public class KinematicMotionState : MMDMotionState
             m = _offset;
         }
         m = m.InvZ();
-        worldTrans = Matrix4X4.Transpose(m).ToBulletMatrix();
+        worldTrans = Matrix4X4.Transpose(m).ToBulletMatrix4x4();
     }
 
     public override void SetWorldTransform(ref Matrix4x4 worldTrans)

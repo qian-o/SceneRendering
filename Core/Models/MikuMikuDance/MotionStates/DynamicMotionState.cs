@@ -23,7 +23,7 @@ public class DynamicMotionState : MMDMotionState
 
     public override void Reset()
     {
-        transform = Matrix4X4.Transpose((_offset * _node.GlobalTransform).InvZ()).ToBulletMatrix();
+        transform = Matrix4X4.Transpose((_offset * _node.GlobalTransform).InvZ()).ToBulletMatrix4x4();
     }
 
     public override void ReflectGlobalTransform()

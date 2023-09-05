@@ -12,7 +12,7 @@ public class DefaultMotionState : MMDMotionState
     public DefaultMotionState(Matrix4X4<float> matrix)
     {
         Matrix4X4<float> trans = matrix.InvZ();
-        transform = Matrix4X4.Transpose(trans).ToBulletMatrix();
+        transform = Matrix4X4.Transpose(trans).ToBulletMatrix4x4();
         initialTransform = transform;
     }
 
