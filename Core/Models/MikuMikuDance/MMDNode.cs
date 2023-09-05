@@ -1,7 +1,7 @@
 ﻿using Core.Helpers;
 using Silk.NET.Maths;
 
-namespace Core.Contracts.Models.MikuMikuDance;
+namespace Core.Models.MikuMikuDance;
 
 public abstract class MMDNode
 {

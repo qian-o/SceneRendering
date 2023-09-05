@@ -1,5 +1,4 @@
-﻿using Core.Contracts.Models.MikuMikuDance;
-using Core.Helpers;
+﻿using Core.Helpers;
 using Silk.NET.Maths;
 
 namespace Core.Models.MikuMikuDance;

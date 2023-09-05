@@ -1,6 +1,6 @@
-﻿namespace Core.Contracts.Models.MikuMikuDance;
+﻿namespace Core.Models.MikuMikuDance;
 
-public abstract class MMDMorph
+public class MMDMorph
 {
     private float saveAnimWeight;
 
