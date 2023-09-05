@@ -272,7 +272,6 @@ public class MMDIkSolver
 
     private void SolvePlane(uint iteration, int chainIdx, SolveAxis solveAxis)
     {
-        // X axis
         int rotateAxisIndex = 0;
         Vector3D<float> rotateAxis = new(1.0f, 0.0f, 0.0f);
         switch (solveAxis)
