@@ -275,23 +275,19 @@ public class MMDIkSolver
         // X axis
         int rotateAxisIndex = 0;
         Vector3D<float> rotateAxis = new(1.0f, 0.0f, 0.0f);
-        Vector3D<float> plane = new(0.0f, 1.0f, 1.0f);
         switch (solveAxis)
         {
             case SolveAxis.X:
                 rotateAxisIndex = 0;
                 rotateAxis = new Vector3D<float>(1.0f, 0.0f, 0.0f);
-                plane = new Vector3D<float>(0.0f, 1.0f, 1.0f);
                 break;
             case SolveAxis.Y:
                 rotateAxisIndex = 1;
                 rotateAxis = new Vector3D<float>(0.0f, 1.0f, 0.0f);
-                plane = new Vector3D<float>(1.0f, 0.0f, 1.0f);
                 break;
             case SolveAxis.Z:
                 rotateAxisIndex = 2;
                 rotateAxis = new Vector3D<float>(0.0f, 0.0f, 1.0f);
-                plane = new Vector3D<float>(1.0f, 1.0f, 0.0f);
                 break;
             default:
                 break;
