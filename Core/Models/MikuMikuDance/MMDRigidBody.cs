@@ -212,7 +212,11 @@ public class MMDRigidBody
 
     public void Reset(MMDPhysics physics)
     {
+        physics.DynamicsWorld?.PairCache.CleanProxyFromPairs(rigidBody!.BroadphaseHandle, physics.DynamicsWorld.Dispatcher);
 
+        rigidBody!.AngularVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        rigidBody.LinearVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        rigidBody.ClearForces();
     }
 
     public void ReflectGlobalTransform()
