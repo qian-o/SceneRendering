@@ -1,7 +1,6 @@
 ﻿using Core.Contracts.Models.MikuMikuDance;
 using Core.Helpers;
 using Silk.NET.Maths;
-using System.Numerics;
 
 namespace Core.Models.MikuMikuDance;
 

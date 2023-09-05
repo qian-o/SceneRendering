@@ -3,7 +3,7 @@ using Silk.NET.Maths;
 
 namespace Core.Contracts.Models.MikuMikuDance;
 
-public unsafe abstract class MMDNode
+public abstract class MMDNode
 {
     protected uint index;
     protected string name;
