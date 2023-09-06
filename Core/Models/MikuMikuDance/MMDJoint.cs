@@ -7,9 +7,7 @@ namespace Core.Models.MikuMikuDance;
 
 public class MMDJoint
 {
-    private TypedConstraint? constraint;
-
-    public TypedConstraint? Constraint => constraint;
+    public TypedConstraint? Constraint { get; private set; }
 
     public MMDJoint()
     {
@@ -72,14 +70,14 @@ public class MMDJoint
             springConstraint.SetStiffness(5, pmxJoint.SpringRotate.Z);
         }
 
-        constraint = springConstraint;
+        Constraint = springConstraint;
 
         return true;
     }
 
     public void Destroy()
     {
-        constraint?.Dispose();
-        constraint = null;
+        Constraint?.Dispose();
+        Constraint = null;
     }
 }

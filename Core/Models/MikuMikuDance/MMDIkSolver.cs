@@ -39,46 +39,40 @@ public class MMDIkSolver
     #endregion
 
     private readonly List<IKChain> chains = new();
-    private MMDNode? ikNode;
-    private MMDNode? ikTarget;
-    private uint iterateCount;
-    private float limitAngle;
-    private bool enable;
-    private bool baseAnimEnable;
 
-    public MMDNode? IKNode { get => ikNode; set => ikNode = value; }
+    public MMDNode? IKNode { get; set; }
 
-    public MMDNode? TargetNode { get => ikTarget; set => ikTarget = value; }
+    public MMDNode? TargetNode { get; set; }
 
     public string Name
     {
         get
         {
-            if (ikNode is null)
+            if (IKNode is null)
             {
                 return string.Empty;
             }
 
-            return ikNode.Name;
+            return IKNode.Name;
         }
     }
 
-    public uint IterateCount { set => iterateCount = value; }
+    public uint IterateCount { get; set; }
 
-    public float LimitAngle { set => limitAngle = value; }
+    public float LimitAngle { get; set; }
 
-    public bool Enable { get => enable; set => enable = value; }
+    public bool Enable { get; set; }
 
-    public bool BaseAnimationEnabled => baseAnimEnable;
+    public bool BaseAnimationEnabled { get; private set; }
 
     public MMDIkSolver()
     {
-        ikNode = null;
-        ikTarget = null;
-        iterateCount = 1;
-        limitAngle = MathHelper.Pi * 2.0f;
-        enable = true;
-        baseAnimEnable = true;
+        IKNode = null;
+        TargetNode = null;
+        IterateCount = 1;
+        LimitAngle = MathHelper.Pi * 2.0f;
+        Enable = true;
+        BaseAnimationEnabled = true;
     }
 
     public void AddIKChain(MMDNode node, bool isKnee = false)
@@ -108,12 +102,12 @@ public class MMDIkSolver
 
     public void Solve()
     {
-        if (!enable)
+        if (!Enable)
         {
             return;
         }
 
-        if (ikNode is null || ikTarget is null)
+        if (IKNode is null || TargetNode is null)
         {
             // wrong ik
             return;
@@ -131,12 +125,12 @@ public class MMDIkSolver
         }
 
         float maxDist = float.MaxValue;
-        for (uint i = 0; i < iterateCount; i++)
+        for (uint i = 0; i < IterateCount; i++)
         {
             SolveCore(i);
 
-            Vector3D<float> targetPos = ikTarget.GlobalTransform[3].ToVector3D();
-            Vector3D<float> ikPos = ikNode.GlobalTransform[3].ToVector3D();
+            Vector3D<float> targetPos = TargetNode.GlobalTransform[3].ToVector3D();
+            Vector3D<float> ikPos = IKNode.GlobalTransform[3].ToVector3D();
             float dist = Vector3D.Distance(targetPos, ikPos);
             if (dist < maxDist)
             {
@@ -161,28 +155,28 @@ public class MMDIkSolver
 
     public void SaveBaseAnimation()
     {
-        baseAnimEnable = enable;
+        BaseAnimationEnabled = Enable;
     }
 
     public void LoadBaseAnimation()
     {
-        enable = baseAnimEnable;
+        Enable = BaseAnimationEnabled;
     }
 
     public void ClearBaseAnimation()
     {
-        baseAnimEnable = true;
+        BaseAnimationEnabled = true;
     }
 
     private void SolveCore(uint iteration)
     {
-        Vector3D<float> ikPos = ikNode!.GlobalTransform[3].ToVector3D();
+        Vector3D<float> ikPos = IKNode!.GlobalTransform[3].ToVector3D();
 
         for (int chainIdx = 0; chainIdx < chains.Count; chainIdx++)
         {
             IKChain chain = chains[chainIdx];
             MMDNode chainNode = chain.Node;
-            if (chainNode == ikTarget)
+            if (chainNode == TargetNode)
             {
                 /*
 				ターゲットとチェインが同じ場合、 chainTargetVec が0ベクトルとなる。
@@ -218,7 +212,7 @@ public class MMDIkSolver
                 }
             }
 
-            Vector3D<float> targetPos = ikTarget!.GlobalTransform[3].ToVector3D();
+            Vector3D<float> targetPos = TargetNode!.GlobalTransform[3].ToVector3D();
 
             Matrix4X4<float> invChain = chain.Node.GlobalTransform.Invert();
 
@@ -237,7 +231,7 @@ public class MMDIkSolver
             {
                 continue;
             }
-            angle = MathHelper.Clamp(angle, -limitAngle, limitAngle);
+            angle = MathHelper.Clamp(angle, -LimitAngle, LimitAngle);
             Vector3D<float> cross = Vector3D.Normalize(Vector3D.Cross(chainTargetVec, chainIkVec));
             Quaternion<float> rot = Quaternion<float>.CreateFromAxisAngle(cross, angle);
 
@@ -250,7 +244,7 @@ public class MMDIkSolver
                 Vector3D<float> clampXYZ;
                 clampXYZ = Vector3D.Clamp(rotXYZ, chain.LowerLimit, chain.UpperLimit);
 
-                clampXYZ = Vector3D.Clamp(clampXYZ - chain.PrevAngle, new Vector3D<float>(-limitAngle), new Vector3D<float>(limitAngle)) + chain.PrevAngle;
+                clampXYZ = Vector3D.Clamp(clampXYZ - chain.PrevAngle, new Vector3D<float>(-LimitAngle), new Vector3D<float>(LimitAngle)) + chain.PrevAngle;
                 Quaternion<float> r = Quaternion<float>.CreateFromAxisAngle(new Vector3D<float>(1.0f, 0.0f, 0.0f), clampXYZ.X);
                 r = Quaternion<float>.CreateFromAxisAngle(new Vector3D<float>(0.0f, 1.0f, 0.0f), clampXYZ.Y) * r;
                 r = Quaternion<float>.CreateFromAxisAngle(new Vector3D<float>(0.0f, 0.0f, 1.0f), clampXYZ.Z) * r;
@@ -291,9 +285,9 @@ public class MMDIkSolver
         }
 
         IKChain chain = chains[chainIdx];
-        Vector3D<float> ikPos = ikNode!.GlobalTransform[3].ToVector3D();
+        Vector3D<float> ikPos = IKNode!.GlobalTransform[3].ToVector3D();
 
-        Vector3D<float> targetPos = ikTarget!.GlobalTransform[3].ToVector3D();
+        Vector3D<float> targetPos = TargetNode!.GlobalTransform[3].ToVector3D();
 
         Matrix4X4<float> invChain = chain.Node.GlobalTransform.Invert();
 
@@ -308,7 +302,7 @@ public class MMDIkSolver
 
         float angle = MathF.Acos(dot);
 
-        angle = MathHelper.Clamp(angle, -limitAngle, limitAngle);
+        angle = MathHelper.Clamp(angle, -LimitAngle, LimitAngle);
 
         Quaternion<float> rot1 = Quaternion<float>.CreateFromAxisAngle(rotateAxis, angle);
         Vector3D<float> targetVec1 = Vector3D.Transform(chainTargetVec, rot1);

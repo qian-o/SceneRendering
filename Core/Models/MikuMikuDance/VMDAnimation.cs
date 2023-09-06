@@ -9,9 +9,8 @@ public class VMDAnimation
     private readonly List<VMDIkController> ikControllers = new();
 
     private MMDModel? model;
-    private uint maxKeyTime;
 
-    public int MaxKeyTime => (int)maxKeyTime;
+    public int MaxKeyTime { get; private set; }
 
     public VMDAnimation()
     {
@@ -147,7 +146,7 @@ public class VMDAnimation
         }
         ikCtrlMap.Clear();
 
-        maxKeyTime = (uint)CalculateMaxKeyTime();
+        MaxKeyTime = CalculateMaxKeyTime();
 
         return true;
     }
@@ -157,7 +156,7 @@ public class VMDAnimation
         nodeControllers.Clear();
         morphControllers.Clear();
         ikControllers.Clear();
-        maxKeyTime = 0;
+        MaxKeyTime = 0;
     }
 
     public void Evaluate(float t, float weight = 1.0f)

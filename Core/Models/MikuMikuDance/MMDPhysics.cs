@@ -9,23 +9,20 @@ public class MMDPhysics
     private DefaultCollisionConfiguration? collisionConfig;
     private CollisionDispatcher? dispatcher;
     private SequentialImpulseConstraintSolver? solver;
-    private DiscreteDynamicsWorld? world;
     private CollisionShape? groundShape;
     private MotionState? groundMS;
     private RigidBody? groundRB;
-    private float fps;
-    private int maxSubStepCount;
 
-    public float FPS { get => fps; set => fps = value; }
+    public float FPS { get; set; }
 
-    public int MaxSubStepCount { get => maxSubStepCount; set => maxSubStepCount = value; }
+    public int MaxSubStepCount { get; set; }
 
-    public DiscreteDynamicsWorld? DynamicsWorld => world;
+    public DiscreteDynamicsWorld? DynamicsWorld { get; private set; }
 
     public MMDPhysics()
     {
-        fps = 120.0f;
-        maxSubStepCount = 10;
+        FPS = 120.0f;
+        MaxSubStepCount = 10;
     }
 
     ~MMDPhysics()
@@ -41,7 +38,7 @@ public class MMDPhysics
 
         solver = new SequentialImpulseConstraintSolver();
 
-        world = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig)
+        DynamicsWorld = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig)
         {
             Gravity = new Vector3(0.0f, -9.8f * 10.0f, 0.0f)
         };
@@ -53,11 +50,11 @@ public class MMDPhysics
         RigidBodyConstructionInfo groundInfo = new(0.0f, groundMS, groundShape, new Vector3(0.0f, 0.0f, 0.0f));
         groundRB = new RigidBody(groundInfo);
 
-        world.AddRigidBody(groundRB);
+        DynamicsWorld.AddRigidBody(groundRB);
 
         MMDFilterCallback callback = new();
         callback.NonFilterProxy.Add(groundRB.BroadphaseProxy);
-        world.PairCache.SetOverlapFilterCallback(callback);
+        DynamicsWorld.PairCache.SetOverlapFilterCallback(callback);
 
         return true;
     }
@@ -66,14 +63,14 @@ public class MMDPhysics
     {
         if (groundRB != null)
         {
-            world?.RemoveRigidBody(groundRB);
+            DynamicsWorld?.RemoveRigidBody(groundRB);
         }
 
         broadphase?.Dispose();
         collisionConfig?.Dispose();
         dispatcher?.Dispose();
         solver?.Dispose();
-        world?.Dispose();
+        DynamicsWorld?.Dispose();
         groundShape?.Dispose();
         groundMS?.Dispose();
         groundRB?.Dispose();
@@ -81,24 +78,24 @@ public class MMDPhysics
 
     public void Update(float time)
     {
-        world?.StepSimulation(time, MaxSubStepCount, 1.0f / fps);
+        DynamicsWorld?.StepSimulation(time, MaxSubStepCount, 1.0f / FPS);
     }
 
     public void AddRigidBody(MMDRigidBody mmdRB)
     {
-        world?.AddRigidBody(mmdRB.RigidBody, 1 << mmdRB.Group, mmdRB.GroupMask);
+        DynamicsWorld?.AddRigidBody(mmdRB.RigidBody, 1 << mmdRB.Group, mmdRB.GroupMask);
     }
 
     public void RemoveRigidBody(MMDRigidBody mmdRB)
     {
-        world?.RemoveRigidBody(mmdRB.RigidBody);
+        DynamicsWorld?.RemoveRigidBody(mmdRB.RigidBody);
     }
 
     public void AddJoint(MMDJoint mmdJoint)
     {
         if (mmdJoint.Constraint != null)
         {
-            world?.AddConstraint(mmdJoint.Constraint);
+            DynamicsWorld?.AddConstraint(mmdJoint.Constraint);
         }
     }
 
@@ -106,7 +103,7 @@ public class MMDPhysics
     {
         if (mmdJoint.Constraint != null)
         {
-            world?.RemoveConstraint(mmdJoint.Constraint);
+            DynamicsWorld?.RemoveConstraint(mmdJoint.Constraint);
         }
     }
 }

@@ -2,9 +2,7 @@
 
 public class MMDPhysicsManager
 {
-    private MMDPhysics? mmdPhysics;
-
-    public MMDPhysics? MMDPhysics => mmdPhysics;
+    public MMDPhysics? MMDPhysics { get; private set; }
 
     public List<MMDRigidBody> RigidBodys { get; } = new List<MMDRigidBody>();
 
@@ -19,21 +17,21 @@ public class MMDPhysicsManager
     {
         foreach (MMDRigidBody rigidBody in RigidBodys)
         {
-            mmdPhysics?.RemoveRigidBody(rigidBody);
+            MMDPhysics?.RemoveRigidBody(rigidBody);
         }
         RigidBodys.Clear();
 
         foreach (MMDJoint joint in Joints)
         {
-            mmdPhysics?.RemoveJoint(joint);
+            MMDPhysics?.RemoveJoint(joint);
         }
         Joints.Clear();
     }
 
     public bool Create()
     {
-        mmdPhysics = new MMDPhysics();
-        return mmdPhysics.Create();
+        MMDPhysics = new MMDPhysics();
+        return MMDPhysics.Create();
     }
 
     public MMDRigidBody AddRigidBody()

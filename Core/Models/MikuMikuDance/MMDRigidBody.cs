@@ -23,34 +23,30 @@ public class MMDRigidBody
     private CollisionShape? shape;
     private MMDMotionState? activeMotionState;
     private MMDMotionState? kinematicMotionState;
-    private RigidBody? rigidBody;
     private RigidBodyType rigidBodyType;
-    private ushort group;
-    private ushort groupMask;
     private MMDNode? node;
     private Matrix4X4<float> offsetMat;
-    private string name;
 
-    public RigidBody? RigidBody => rigidBody;
+    public RigidBody? RigidBody { get; private set; }
 
-    public ushort Group => group;
+    public ushort Group { get; private set; }
 
-    public ushort GroupMask => groupMask;
+    public ushort GroupMask { get; private set; }
 
-    public string Name => name;
+    public string Name { get; private set; }
 
     public MMDRigidBody()
     {
         shape = null;
         activeMotionState = null;
         kinematicMotionState = null;
-        rigidBody = null;
+        RigidBody = null;
         rigidBodyType = RigidBodyType.Kinematic;
-        group = 0;
-        groupMask = 0;
+        Group = 0;
+        GroupMask = 0;
         node = null;
         offsetMat = Matrix4X4<float>.Identity;
-        name = string.Empty;
+        Name = string.Empty;
     }
 
     public bool Create(PMXRigidbody pmxRigidBody, MMDModel model, MMDNode node)
@@ -152,15 +148,15 @@ public class MMDRigidBody
             AdditionalDamping = true
         };
 
-        rigidBody = new RigidBody(rbInfo)
+        RigidBody = new RigidBody(rbInfo)
         {
             UserObject = this
         };
-        rigidBody.SetSleepingThresholds(0.01f, MathHelper.DegreesToRadians(0.1f));
-        rigidBody.ActivationState = ActivationState.DisableDeactivation;
+        RigidBody.SetSleepingThresholds(0.01f, MathHelper.DegreesToRadians(0.1f));
+        RigidBody.ActivationState = ActivationState.DisableDeactivation;
         if (pmxRigidBody.Op == PMX.Operation.Static)
         {
-            rigidBody.CollisionFlags |= CollisionFlags.KinematicObject;
+            RigidBody.CollisionFlags |= CollisionFlags.KinematicObject;
         }
 
         rigidBodyType = pmxRigidBody.Op switch
@@ -170,10 +166,10 @@ public class MMDRigidBody
             PMX.Operation.DynamicAndBoneMerge => RigidBodyType.Dynamic,
             _ => RigidBodyType.Kinematic,
         };
-        group = pmxRigidBody.Group;
-        groupMask = pmxRigidBody.CollisionGroup;
+        Group = pmxRigidBody.Group;
+        GroupMask = pmxRigidBody.CollisionGroup;
         this.node = node;
-        name = pmxRigidBody.Name;
+        Name = pmxRigidBody.Name;
 
         return true;
     }
@@ -190,18 +186,18 @@ public class MMDRigidBody
         {
             if (activation)
             {
-                rigidBody!.CollisionFlags &= ~CollisionFlags.KinematicObject;
-                rigidBody.MotionState = activeMotionState;
+                RigidBody!.CollisionFlags &= ~CollisionFlags.KinematicObject;
+                RigidBody.MotionState = activeMotionState;
             }
             else
             {
-                rigidBody!.CollisionFlags |= CollisionFlags.KinematicObject;
-                rigidBody.MotionState = kinematicMotionState;
+                RigidBody!.CollisionFlags |= CollisionFlags.KinematicObject;
+                RigidBody.MotionState = kinematicMotionState;
             }
         }
         else
         {
-            rigidBody!.MotionState = kinematicMotionState;
+            RigidBody!.MotionState = kinematicMotionState;
         }
     }
 
@@ -212,11 +208,11 @@ public class MMDRigidBody
 
     public void Reset(MMDPhysics physics)
     {
-        physics.DynamicsWorld?.PairCache.CleanProxyFromPairs(rigidBody!.BroadphaseHandle, physics.DynamicsWorld.Dispatcher);
+        physics.DynamicsWorld?.PairCache.CleanProxyFromPairs(RigidBody!.BroadphaseHandle, physics.DynamicsWorld.Dispatcher);
 
-        rigidBody!.AngularVelocity = new Vector3(0.0f, 0.0f, 0.0f);
-        rigidBody.LinearVelocity = new Vector3(0.0f, 0.0f, 0.0f);
-        rigidBody.ClearForces();
+        RigidBody!.AngularVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        RigidBody.LinearVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        RigidBody.ClearForces();
     }
 
     public void ReflectGlobalTransform()
@@ -245,6 +241,6 @@ public class MMDRigidBody
 
     public Matrix4X4<float> GetTransform()
     {
-        return Matrix4X4.Transpose(rigidBody!.CenterOfMassTransform.ToMatrix()).InvZ();
+        return Matrix4X4.Transpose(RigidBody!.CenterOfMassTransform.ToMatrix()).InvZ();
     }
 }

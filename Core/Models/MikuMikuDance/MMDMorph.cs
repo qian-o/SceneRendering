@@ -2,33 +2,31 @@
 
 public class MMDMorph
 {
-    private float saveAnimWeight;
-
     public string Name { get; set; }
 
     public float Weight { get; set; }
 
-    public float BaseAnimationWeight => saveAnimWeight;
+    public float BaseAnimationWeight { get; private set; }
 
     protected MMDMorph()
     {
         Name = string.Empty;
         Weight = 0.0f;
-        saveAnimWeight = 0.0f;
+        BaseAnimationWeight = 0.0f;
     }
 
     public void SaveBaseAnimation()
     {
-        saveAnimWeight = Weight;
+        BaseAnimationWeight = Weight;
     }
 
     public void LoadBaseAnimation()
     {
-        Weight = saveAnimWeight;
+        Weight = BaseAnimationWeight;
     }
 
     public void ClearBaseAnimation()
     {
-        saveAnimWeight = 0.0f;
+        BaseAnimationWeight = 0.0f;
     }
 }
