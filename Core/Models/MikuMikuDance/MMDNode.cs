@@ -5,115 +5,93 @@ namespace Core.Models.MikuMikuDance;
 
 public abstract class MMDNode
 {
-    protected uint index;
-    protected string name;
-    protected bool enableIK;
-    protected MMDNode? parent;
-    protected MMDNode? child;
-    protected MMDNode? next;
-    protected MMDNode? prev;
-    protected Vector3D<float> translate;
-    protected Quaternion<float> rotate;
-    protected Vector3D<float> scale;
-    protected Vector3D<float> animTranslate;
-    protected Quaternion<float> animRotate;
-    protected Vector3D<float> baseAnimTranslate;
-    protected Quaternion<float> baseAnimRotate;
-    protected Quaternion<float> ikRotate;
-    protected Matrix4X4<float> local;
-    protected Matrix4X4<float> global;
-    protected Matrix4X4<float> inverseInit;
-    protected Vector3D<float> initTranslate;
-    protected Quaternion<float> initRotate;
-    protected Vector3D<float> initScale;
+    public uint Index { get; set; }
 
-    public uint Index { get => index; set => index = value; }
+    public string Name { get; set; }
 
-    public string Name { get => name; set => name = value; }
+    public bool EnableIK { get; set; }
 
-    public bool EnableIK { get => enableIK; set => enableIK = value; }
+    public Vector3D<float> Translate { get; set; }
 
-    public Vector3D<float> Translate { get => translate; set => translate = value; }
+    public Quaternion<float> Rotate { get; set; }
 
-    public Quaternion<float> Rotate { get => rotate; set => rotate = value; }
+    public Vector3D<float> Scale { get; set; }
 
-    public Vector3D<float> Scale { get => scale; set => scale = value; }
+    public Vector3D<float> AnimationTranslate { get; set; }
 
-    public Vector3D<float> AnimationTranslate { get => animTranslate; set => animTranslate = value; }
+    public Quaternion<float> AnimationRotate { get; set; }
 
-    public Quaternion<float> AnimationRotate { get => animRotate; set => animRotate = value; }
+    public Vector3D<float> AnimateTranslate => Translate + AnimationTranslate;
 
-    public Vector3D<float> AnimateTranslate => translate + animTranslate;
+    public Quaternion<float> AnimateRotate => Rotate * AnimationRotate;
 
-    public Quaternion<float> AnimateRotate => rotate * animRotate;
+    public Quaternion<float> IKRotate { get; set; }
 
-    public Quaternion<float> IKRotate { get => ikRotate; set => ikRotate = value; }
+    public MMDNode? Parent { get; protected set; }
 
-    public MMDNode? Parent => parent;
+    public MMDNode? Child { get; protected set; }
 
-    public MMDNode? Child => child;
+    public MMDNode? Next { get; protected set; }
 
-    public MMDNode? Next => next;
+    public MMDNode? Prev { get; protected set; }
 
-    public MMDNode? Prev => prev;
+    public Matrix4X4<float> LocalTransform { get; set; }
 
-    public Matrix4X4<float> LocalTransform { get => local; set => local = value; }
+    public Matrix4X4<float> GlobalTransform { get; set; }
 
-    public Matrix4X4<float> GlobalTransform { get => global; set => global = value; }
+    public Matrix4X4<float> InverseInitTransform { get; set; }
 
-    public Matrix4X4<float> InverseInitTransform { get => inverseInit; set => inverseInit = value; }
+    public Vector3D<float> InitialTranslate { get; protected set; }
 
-    public Vector3D<float> InitialTranslate => initTranslate;
+    public Quaternion<float> InitialRotate { get; protected set; }
 
-    public Quaternion<float> InitialRotate => initRotate;
+    public Vector3D<float> InitialScale { get; protected set; }
 
-    public Vector3D<float> InitialScale => initScale;
+    public Vector3D<float> BaseAnimationTranslate { get; protected set; }
 
-    public Vector3D<float> BaseAnimationTranslate => baseAnimTranslate;
-
-    public Quaternion<float> BaseAnimationRotate => baseAnimRotate;
+    public Quaternion<float> BaseAnimationRotate { get; protected set; }
 
     protected MMDNode()
     {
-        index = 0;
-        name = string.Empty;
-        enableIK = false;
-        parent = null;
-        child = null;
-        next = null;
-        prev = null;
-        translate = new Vector3D<float>(0.0f);
-        rotate = Quaternion<float>.Identity;
-        scale = new Vector3D<float>(1.0f);
-        animTranslate = new Vector3D<float>(0.0f);
-        animRotate = Quaternion<float>.Identity;
-        baseAnimTranslate = new Vector3D<float>(0.0f);
-        baseAnimRotate = Quaternion<float>.Identity;
-        ikRotate = Quaternion<float>.Identity;
-        local = Matrix4X4<float>.Identity;
-        global = Matrix4X4<float>.Identity;
-        inverseInit = Matrix4X4<float>.Identity;
-        initTranslate = new Vector3D<float>(0.0f);
-        initRotate = Quaternion<float>.Identity;
-        initScale = new Vector3D<float>(1.0f);
+        Index = 0;
+        Name = string.Empty;
+        EnableIK = false;
+        Parent = null;
+        Child = null;
+        Next = null;
+        Prev = null;
+        Translate = new Vector3D<float>(0.0f);
+        Rotate = Quaternion<float>.Identity;
+        Scale = new Vector3D<float>(1.0f);
+        AnimationTranslate = new Vector3D<float>(0.0f);
+        AnimationRotate = Quaternion<float>.Identity;
+        BaseAnimationTranslate = new Vector3D<float>(0.0f);
+        BaseAnimationRotate = Quaternion<float>.Identity;
+        IKRotate = Quaternion<float>.Identity;
+        LocalTransform = Matrix4X4<float>.Identity;
+        GlobalTransform = Matrix4X4<float>.Identity;
+        InverseInitTransform = Matrix4X4<float>.Identity;
+        InitialTranslate = new Vector3D<float>(0.0f);
+        InitialRotate = Quaternion<float>.Identity;
+        InitialScale = new Vector3D<float>(1.0f);
     }
 
     public void AddChild(MMDNode value)
     {
-        value.parent = this;
-        if (child == null)
+        value.Parent = this;
+        if (Child == null)
         {
-            child = value;
-            child.next = null;
-            child.prev = child;
+            Child = value;
+            Child.Next = null;
+            Child.Prev = Child;
         }
         else
         {
-            MMDNode? lastNode = child.prev;
-            lastNode!.next = value;
-            value.prev = lastNode;
+            MMDNode? lastNode = Child.Prev;
+            lastNode!.Next = value;
+            value.Prev = lastNode;
 
-            child.prev = value;
+            Child.Prev = value;
         }
     }
 
@@ -136,68 +114,68 @@ public abstract class MMDNode
 
     public void UpdateGlobalTransform()
     {
-        if (parent == null)
+        if (Parent == null)
         {
-            global = local;
+            GlobalTransform = LocalTransform;
         }
         else
         {
-            global = local * parent.global;
+            GlobalTransform = LocalTransform * Parent.GlobalTransform;
         }
 
-        MMDNode? node = child;
+        MMDNode? node = Child;
         while (node != null)
         {
             node.UpdateGlobalTransform();
-            node = node.next;
+            node = node.Next;
         }
     }
 
     public void UpdateChildTransform()
     {
-        MMDNode? node = child;
+        MMDNode? node = Child;
         while (node != null)
         {
             node.UpdateGlobalTransform();
-            node = node.next;
+            node = node.Next;
         }
     }
 
     public void CalculateInverseInitTransform()
     {
-        inverseInit = global.Invert();
+        InverseInitTransform = GlobalTransform.Invert();
     }
 
     public void SaveInitialTRS()
     {
-        initTranslate = translate;
-        initRotate = rotate;
-        initScale = scale;
+        InitialTranslate = Translate;
+        InitialRotate = Rotate;
+        InitialScale = Scale;
     }
 
     public void LoadInitialTRS()
     {
-        translate = initTranslate;
-        rotate = initRotate;
-        scale = initScale;
+        Translate = InitialTranslate;
+        Rotate = InitialRotate;
+        Scale = InitialScale;
     }
 
     public void SaveBaseAnimation()
     {
-        baseAnimTranslate = animTranslate;
-        baseAnimRotate = animRotate;
+        BaseAnimationTranslate = AnimationTranslate;
+        BaseAnimationRotate = AnimationRotate;
     }
 
     public void LoadBaseAnimation()
     {
-        animTranslate = baseAnimTranslate;
-        animRotate = baseAnimRotate;
+        AnimationTranslate = BaseAnimationTranslate;
+        AnimationRotate = BaseAnimationRotate;
     }
 
     public void ClearBaseAnimation()
     {
-        baseAnimTranslate = new Vector3D<float>(0.0f);
-        baseAnimRotate = Quaternion<float>.Identity;
+        BaseAnimationTranslate = new Vector3D<float>(0.0f);
+        BaseAnimationRotate = Quaternion<float>.Identity;
     }
 
     protected virtual void OnBeginUpdateTransform() { }
@@ -209,10 +187,10 @@ public abstract class MMDNode
         Matrix4X4<float> s = Matrix4X4.CreateScale(Scale);
         Matrix4X4<float> r = Matrix4X4.CreateFromQuaternion(AnimateRotate);
         Matrix4X4<float> t = Matrix4X4.CreateTranslation(AnimateTranslate);
-        if (enableIK)
+        if (EnableIK)
         {
             r *= Matrix4X4.CreateFromQuaternion(IKRotate);
         }
-        local = s * r * t;
+        LocalTransform = s * r * t;
     }
 }
