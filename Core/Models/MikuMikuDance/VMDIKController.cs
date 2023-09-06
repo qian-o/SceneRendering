@@ -2,7 +2,7 @@
 
 namespace Core.Models.MikuMikuDance;
 
-public class VMDIKController
+public class VMDIkController
 {
     private int startKeyIndex;
 
@@ -10,7 +10,7 @@ public class VMDIKController
 
     public List<KeyType> Keys { get; } = new List<KeyType>();
 
-    public VMDIKController()
+    public VMDIkController()
     {
         startKeyIndex = 0;
     }

@@ -50,6 +50,11 @@ public static class MathExtensions
         return rotation;
     }
 
+    public static Quaternion<float> InvZ(this Quaternion<float> quaternion)
+    {
+        return Quaternion<float>.CreateFromRotationMatrix(Matrix3X3.CreateFromQuaternion(quaternion).InvZ());
+    }
+
     public static Matrix3X3<float> InvZ(this Matrix3X3<float> matrix)
     {
         Matrix3X3<float> invZ = Matrix3X3.CreateScale(new Vector3D<float>(1.0f, 1.0f, -1.0f));

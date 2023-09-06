@@ -6,7 +6,7 @@ public abstract class MMDIkManager
 
     public abstract int FindIkSolverIndex(string name);
 
-    public abstract MMDIkSolver GetIkSolver(int index);
+    public abstract MMDIkSolver GetMMDIkSolver(int index);
 
     public MMDIkSolver? GetMMDIkSolver(string ikName)
     {
@@ -17,6 +17,6 @@ public abstract class MMDIkManager
             return null;
         }
 
-        return GetIkSolver(findIndex);
+        return GetMMDIkSolver(findIndex);
     }
 }
