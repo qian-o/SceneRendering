@@ -174,8 +174,6 @@ public unsafe abstract class MMDModel
     // 頂点を更新する
     public abstract void Update();
 
-    public abstract void SetParallelUpdateHint(uint parallelCount);
-
     public void UpdateAllAnimation(VMDAnimation? vmdAnim, float vmdFrame, float physicsElapsed)
     {
         vmdAnim?.Evaluate(vmdFrame);

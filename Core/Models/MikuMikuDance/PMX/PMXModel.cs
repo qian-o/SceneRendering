@@ -1,6 +1,5 @@
 ﻿using Core.Helpers;
 using Silk.NET.Maths;
-using System.Runtime.InteropServices;
 
 namespace Core.Models.MikuMikuDance.PMX;
 
@@ -149,7 +148,7 @@ public class PMXModel : MMDModel
 
     private struct MaterialMorphData
     {
-        public MaterialMorph[] MorphMaterials;
+        public MaterialMorph[] MaterialMorphs;
     }
 
     private struct BoneMorphElement
@@ -229,7 +228,7 @@ public class PMXModel : MMDModel
     private MMDMorphManagerT<PMXMorph>? morphMan;
     private MMDPhysicsManager? physicsMan;
 
-    private uint parallelUpdateCount;
+    private int parallelUpdateCount;
     private UpdateRange[] updateRanges = Array.Empty<UpdateRange>();
     #endregion
 
@@ -251,17 +250,91 @@ public class PMXModel : MMDModel
 
     public bool Load(string path, string mmdDataDir)
     {
-        return false;
+        Destroy();
+
+        PMXFile pmx = new(path);
+
+        string dirPath = Path.GetDirectoryName(path)!;
+
+        return true;
     }
 
     public void Destroy()
     {
+        materials = Array.Empty<MMDMaterial>();
+        subMeshes = Array.Empty<MMDSubMesh>();
 
+        positions = Array.Empty<Vector3D<float>>();
+        normals = Array.Empty<Vector3D<float>>();
+        uvs = Array.Empty<Vector2D<float>>();
+        vertexBoneInfos = Array.Empty<VertexBoneInfo>();
+
+        indices = Array.Empty<char>();
+
+        nodeMan?.Nodes.Clear();
+
+        updateRanges = Array.Empty<UpdateRange>();
     }
 
     private void SetupParallelUpdate()
     {
+        if (parallelUpdateCount == 0)
+        {
+            parallelUpdateCount = Environment.ProcessorCount;
+        }
 
+        int maxParallelCount = MathHelper.Max(16, Environment.ProcessorCount);
+        if (parallelUpdateCount > maxParallelCount)
+        {
+            parallelUpdateCount = 16;
+        }
+
+        Array.Resize(ref updateRanges, parallelUpdateCount);
+
+        int vertexCount = positions.Length;
+        int lowerVertexCount = 1000;
+        if (vertexCount < updateRanges.Length * lowerVertexCount)
+        {
+            int numRanges = (vertexCount + lowerVertexCount - 1) / lowerVertexCount;
+            for (int rangeIdx = 0; rangeIdx < updateRanges.Length; rangeIdx++)
+            {
+                UpdateRange range = new();
+                if (rangeIdx < numRanges)
+                {
+                    range.VertexOffset = rangeIdx * lowerVertexCount;
+                    range.VertexCount = MathHelper.Min(lowerVertexCount, vertexCount - range.VertexOffset);
+                }
+                else
+                {
+                    range.VertexOffset = 0;
+                    range.VertexCount = 0;
+                }
+
+                updateRanges[rangeIdx] = range;
+            }
+        }
+        else
+        {
+            int numVertexCount = vertexCount / updateRanges.Length;
+            int offset = 0;
+            for (int rangeIdx = 0; rangeIdx < updateRanges.Length; rangeIdx++)
+            {
+                UpdateRange range = new()
+                {
+                    VertexOffset = offset,
+                    VertexCount = numVertexCount
+                };
+
+                if (rangeIdx == 0)
+                {
+                    range.VertexCount += vertexCount % updateRanges.Length;
+                }
+
+                offset = range.VertexOffset + range.VertexCount;
+
+                updateRanges[rangeIdx] = range;
+            }
+        }
     }
 
     private void Update(UpdateRange range)
@@ -271,37 +344,184 @@ public class PMXModel : MMDModel
 
     private void Morph(PMXMorph morph, float weight)
     {
+        switch (morph.MorphType)
+        {
+            case MorphType.Position:
+                MorphPosition(positionMorphDatas[morph.DataIndex], weight);
+                break;
+            case MorphType.UV:
+                MorphUV(uvMorphDatas[morph.DataIndex], weight);
+                break;
+            case MorphType.Material:
+                MorphMaterial(materialMorphDatas[morph.DataIndex], weight);
+                break;
+            case MorphType.Bone:
+                MorphBone(boneMorphDatas[morph.DataIndex], weight);
+                break;
+            case MorphType.Group:
+                {
+                    GroupMorphData groupMorphData = groupMorphDatas[morph.DataIndex];
+                    foreach (GroupMorph groupMorph in groupMorphData.GroupMorphs)
+                    {
+                        if (groupMorph.MorphIndex == -1)
+                        {
+                            continue;
+                        }
 
+                        PMXMorph elemMorph = morphMan!.Morphs[groupMorph.MorphIndex];
+                        Morph(elemMorph, groupMorph.Weight * weight);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private void MorphPosition(PositionMorphData morphData, float weight)
     {
+        if (weight == 0)
+        {
+            return;
+        }
 
+        foreach (PositionMorph morphVtx in morphData.MorphVertices)
+        {
+            morphPositions[morphVtx.Index] += morphVtx.Position * weight;
+        }
     }
 
     private void MorphUV(UVMorphData morphData, float weight)
     {
+        if (weight == 0)
+        {
+            return;
+        }
 
+        foreach (UVMorph morphVtx in morphData.MorphUVs)
+        {
+            morphUVs[morphVtx.Index] += morphVtx.UV * weight;
+        }
     }
 
     private void BeginMorphMaterial()
     {
+        MaterialFactor initMul = new()
+        {
+            Diffuse = Vector3D<float>.One,
+            Alpha = 1.0f,
+            Specular = Vector3D<float>.One,
+            SpecularPower = 1.0f,
+            Ambient = Vector3D<float>.One,
+            EdgeColor = Vector4D<float>.One,
+            EdgeSize = 1.0f,
+            TextureFactor = Vector4D<float>.One,
+            SphereTextureFactor = Vector4D<float>.One,
+            ToonTextureFactor = Vector4D<float>.One
+        };
 
+        MaterialFactor initAdd = new()
+        {
+            Diffuse = Vector3D<float>.Zero,
+            Alpha = 0.0f,
+            Specular = Vector3D<float>.Zero,
+            SpecularPower = 0.0f,
+            Ambient = Vector3D<float>.Zero,
+            EdgeColor = Vector4D<float>.Zero,
+            EdgeSize = 0.0f,
+            TextureFactor = Vector4D<float>.Zero,
+            SphereTextureFactor = Vector4D<float>.Zero,
+            ToonTextureFactor = Vector4D<float>.Zero
+        };
+
+        int matCount = materials.Length;
+        for (int matIdx = 0; matIdx < matCount; matIdx++)
+        {
+            mulMaterialFactors[matIdx] = initMul;
+            mulMaterialFactors[matIdx].Diffuse = initMaterials[matIdx].Diffuse;
+            mulMaterialFactors[matIdx].Alpha = initMaterials[matIdx].Alpha;
+            mulMaterialFactors[matIdx].Specular = initMaterials[matIdx].Specular;
+            mulMaterialFactors[matIdx].SpecularPower = initMaterials[matIdx].SpecularPower;
+            mulMaterialFactors[matIdx].Ambient = initMaterials[matIdx].Ambient;
+
+            addMaterialFactors[matIdx] = initAdd;
+        }
     }
 
     private void EndMorphMaterial()
     {
+        int matCount = materials.Length;
+        for (int matIdx = 0; matIdx < matCount; matIdx++)
+        {
+            MaterialFactor matFactor = mulMaterialFactors[matIdx];
+            matFactor.Add(addMaterialFactors[matIdx], 1.0f);
 
+            materials[matIdx].Diffuse = matFactor.Diffuse;
+            materials[matIdx].Alpha = matFactor.Alpha;
+            materials[matIdx].Specular = matFactor.Specular;
+            materials[matIdx].SpecularPower = matFactor.SpecularPower;
+            materials[matIdx].Ambient = matFactor.Ambient;
+            materials[matIdx].TextureMulFactor = mulMaterialFactors[matIdx].TextureFactor;
+            materials[matIdx].TextureAddFactor = addMaterialFactors[matIdx].TextureFactor;
+            materials[matIdx].SpTextureMulFactor = mulMaterialFactors[matIdx].SphereTextureFactor;
+            materials[matIdx].SpTextureAddFactor = addMaterialFactors[matIdx].SphereTextureFactor;
+            materials[matIdx].ToonTextureMulFactor = mulMaterialFactors[matIdx].ToonTextureFactor;
+            materials[matIdx].ToonTextureAddFactor = addMaterialFactors[matIdx].ToonTextureFactor;
+        }
     }
 
     private void MorphMaterial(MaterialMorphData morphData, float weight)
     {
-
+        foreach (MaterialMorph matMorph in morphData.MaterialMorphs)
+        {
+            if (matMorph.MaterialIndex != -1)
+            {
+                int mi = matMorph.MaterialIndex;
+                switch (matMorph.OpType)
+                {
+                    case OpType.Mul:
+                        mulMaterialFactors[mi].Mul(new MaterialFactor(matMorph), weight);
+                        break;
+                    case OpType.Add:
+                        mulMaterialFactors[mi].Add(new MaterialFactor(matMorph), weight);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                switch (matMorph.OpType)
+                {
+                    case OpType.Mul:
+                        for (int i = 0; i < materials.Length; i++)
+                        {
+                            mulMaterialFactors[i].Mul(new MaterialFactor(matMorph), weight);
+                        }
+                        break;
+                    case OpType.Add:
+                        for (int i = 0; i < materials.Length; i++)
+                        {
+                            addMaterialFactors[i].Add(new MaterialFactor(matMorph), weight);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private void MorphBone(BoneMorphData morphData, float weight)
     {
-
+        foreach (BoneMorphElement boneMorph in morphData.BoneMorphs)
+        {
+            MMDNode node = boneMorph.Node!;
+            Vector3D<float> t = Vector3D.Lerp(Vector3D<float>.Zero, boneMorph.Position, weight);
+            node.Translate += t;
+            Quaternion<float> q = Quaternion<float>.Slerp(node.Rotate, boneMorph.Rotate, weight);
+            node.Rotate = q;
+        }
     }
 
     public override MMDNodeManager? GetNodeManager()
@@ -371,7 +591,7 @@ public class PMXModel : MMDModel
 
     public override unsafe void* GetIndices()
     {
-        return (void*)Marshal.UnsafeAddrOfPinnedArrayElement(indices, 0);
+        return indices.Data();
     }
 
     public override int GetMaterialCount()
@@ -561,20 +781,100 @@ public class PMXModel : MMDModel
     public override void ResetPhysics()
     {
         MMDPhysicsManager physicsMan = GetPhysicsManager()!;
-    }
+        MMDPhysics? physics = physicsMan.MMDPhysics;
 
-    public override void SetParallelUpdateHint(uint parallelCount)
-    {
-        throw new NotImplementedException();
-    }
+        if (physics == null)
+        {
+            return;
+        }
 
-    public override void Update()
-    {
-        throw new NotImplementedException();
+        List<MMDRigidBody> rigidbodys = physicsMan.RigidBodys;
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.SetActivation(false);
+            rb.ResetTransform();
+        }
+
+        physics.Update(1.0f / 60.0f);
+
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.ReflectGlobalTransform();
+        }
+
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.CalcLocalTransform();
+        }
+
+        foreach (PMXNode node in nodeMan!.Nodes)
+        {
+            if (node.Parent == null)
+            {
+                node.UpdateGlobalTransform();
+            }
+        }
+
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.Reset(physics);
+        }
     }
 
     public override void UpdatePhysicsAnimation(float elapsed)
     {
-        throw new NotImplementedException();
+        MMDPhysicsManager physicsMan = GetPhysicsManager()!;
+        MMDPhysics? physics = physicsMan.MMDPhysics;
+
+        if (physics == null)
+        {
+            return;
+        }
+
+        List<MMDRigidBody> rigidbodys = physicsMan.RigidBodys;
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.SetActivation(true);
+        }
+
+        physics.Update(elapsed);
+
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.ReflectGlobalTransform();
+        }
+
+        foreach (MMDRigidBody rb in rigidbodys)
+        {
+            rb.CalcLocalTransform();
+        }
+
+        foreach (PMXNode node in nodeMan!.Nodes)
+        {
+            if (node.Parent == null)
+            {
+                node.UpdateGlobalTransform();
+            }
+        }
+    }
+
+    public override void Update()
+    {
+        List<PMXNode> nodes = nodeMan!.Nodes;
+
+        // スキンメッシュに使用する変形マトリクスを事前計算
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            transforms[i] = nodes[i].InverseInitTransform * nodes[i].GlobalTransform;
+        }
+
+        SetupParallelUpdate();
+
+        Update(updateRanges[0]);
+
+        Parallel.For(0, parallelUpdateCount - 1, (i) =>
+        {
+            Update(updateRanges[i + 1]);
+        });
     }
 }
