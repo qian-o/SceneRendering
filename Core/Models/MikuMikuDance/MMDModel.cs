@@ -47,6 +47,8 @@ public unsafe abstract class MMDModel
 
     public abstract MMDMorphManager? GetMorphManager();
 
+    public abstract MMDPhysicsManager? GetPhysicsManager();
+
     public abstract int GetVertexCount();
 
     public abstract Vector3D<float>* GetPositions();

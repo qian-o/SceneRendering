@@ -1,5 +1,6 @@
 ﻿using Core.Helpers;
 using Silk.NET.Maths;
+using System.Runtime.InteropServices;
 
 namespace Core.Models.MikuMikuDance.PMX;
 
@@ -303,6 +304,101 @@ public class PMXModel : MMDModel
 
     }
 
+    public override MMDNodeManager? GetNodeManager()
+    {
+        return nodeMan;
+    }
+
+    public override MMDIkManager? GetIkManager()
+    {
+        return ikSolverMan;
+    }
+
+    public override MMDMorphManager? GetMorphManager()
+    {
+        return morphMan;
+    }
+
+    public override MMDPhysicsManager? GetPhysicsManager()
+    {
+        return physicsMan;
+    }
+
+    public override int GetVertexCount()
+    {
+        return positions.Length;
+    }
+
+    public override unsafe Vector3D<float>* GetPositions()
+    {
+        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(positions, 0);
+    }
+
+    public override unsafe Vector3D<float>* GetNormals()
+    {
+        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(normals, 0);
+    }
+
+    public override unsafe Vector2D<float>* GetUVs()
+    {
+        return (Vector2D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(uvs, 0);
+    }
+
+    public override unsafe Vector3D<float>* GetUpdatePositions()
+    {
+        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updatePositions, 0);
+    }
+
+    public override unsafe Vector3D<float>* GetUpdateNormals()
+    {
+        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updateNormals, 0);
+    }
+
+    public override unsafe Vector2D<float>* GetUpdateUVs()
+    {
+        return (Vector2D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updateUVs, 0);
+    }
+
+    public override int GetIndexCount()
+    {
+        return indexCount;
+    }
+
+    public override int GetIndexElementSize()
+    {
+        return indexElementSize;
+    }
+
+    public override unsafe void* GetIndices()
+    {
+        return (void*)Marshal.UnsafeAddrOfPinnedArrayElement(indices, 0);
+    }
+
+    public override int GetMaterialCount()
+    {
+        return materials.Length;
+    }
+
+    public override unsafe MMDMaterial* GetMaterials()
+    {
+        return (MMDMaterial*)Marshal.UnsafeAddrOfPinnedArrayElement(materials, 0);
+    }
+
+    public override int GetSubMeshCount()
+    {
+        return subMeshes.Length;
+    }
+
+    public override unsafe MMDSubMesh* GetSubMeshes()
+    {
+        return (MMDSubMesh*)Marshal.UnsafeAddrOfPinnedArrayElement(subMeshes, 0);
+    }
+
+    public override MMDPhysics? GetMMDPhysics()
+    {
+        return physicsMan?.MMDPhysics;
+    }
+
     public override void InitializeAnimation()
     {
         ClearBaseAnimation();
@@ -462,99 +558,9 @@ public class PMXModel : MMDModel
         }
     }
 
-    public override MMDIkManager? GetIkManager()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override int GetIndexCount()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override int GetIndexElementSize()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe void* GetIndices()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override int GetMaterialCount()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe MMDMaterial* GetMaterials()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override MMDPhysics? GetMMDPhysics()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override MMDMorphManager? GetMorphManager()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override MMDNodeManager? GetNodeManager()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector3D<float>* GetNormals()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector3D<float>* GetPositions()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override int GetSubMeshCount()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe MMDSubMesh* GetSubMeshes()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector3D<float>* GetUpdateNormals()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector3D<float>* GetUpdatePositions()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector2D<float>* GetUpdateUVs()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override unsafe Vector2D<float>* GetUVs()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override int GetVertexCount()
-    {
-        throw new NotImplementedException();
-    }
-
     public override void ResetPhysics()
     {
-        throw new NotImplementedException();
+        MMDPhysicsManager physicsMan = GetPhysicsManager()!;
     }
 
     public override void SetParallelUpdateHint(uint parallelCount)
