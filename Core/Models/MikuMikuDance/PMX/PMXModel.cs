@@ -191,11 +191,11 @@ public class PMXModel : MMDModel
     #region Fields
     private Vector3D<float>[] positions = Array.Empty<Vector3D<float>>();
     private Vector3D<float>[] normals = Array.Empty<Vector3D<float>>();
-    private Vector4D<float>[] uvs = Array.Empty<Vector4D<float>>();
+    private Vector2D<float>[] uvs = Array.Empty<Vector2D<float>>();
     private VertexBoneInfo[] vertexBoneInfos = Array.Empty<VertexBoneInfo>();
     private Vector3D<float>[] updatePositions = Array.Empty<Vector3D<float>>();
     private Vector3D<float>[] updateNormals = Array.Empty<Vector3D<float>>();
-    private Vector4D<float>[] updateUVs = Array.Empty<Vector4D<float>>();
+    private Vector2D<float>[] updateUVs = Array.Empty<Vector2D<float>>();
     private Matrix4X4<float>[] transforms = Array.Empty<Matrix4X4<float>>();
 
     private char[] indices = Array.Empty<char>();
@@ -331,32 +331,32 @@ public class PMXModel : MMDModel
 
     public override unsafe Vector3D<float>* GetPositions()
     {
-        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(positions, 0);
+        return positions.Data();
     }
 
     public override unsafe Vector3D<float>* GetNormals()
     {
-        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(normals, 0);
+        return normals.Data();
     }
 
     public override unsafe Vector2D<float>* GetUVs()
     {
-        return (Vector2D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(uvs, 0);
+        return uvs.Data();
     }
 
     public override unsafe Vector3D<float>* GetUpdatePositions()
     {
-        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updatePositions, 0);
+        return updatePositions.Data();
     }
 
     public override unsafe Vector3D<float>* GetUpdateNormals()
     {
-        return (Vector3D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updateNormals, 0);
+        return updateNormals.Data();
     }
 
     public override unsafe Vector2D<float>* GetUpdateUVs()
     {
-        return (Vector2D<float>*)Marshal.UnsafeAddrOfPinnedArrayElement(updateUVs, 0);
+        return updateUVs.Data();
     }
 
     public override int GetIndexCount()
@@ -381,7 +381,7 @@ public class PMXModel : MMDModel
 
     public override unsafe MMDMaterial* GetMaterials()
     {
-        return (MMDMaterial*)Marshal.UnsafeAddrOfPinnedArrayElement(materials, 0);
+        return materials.Data();
     }
 
     public override int GetSubMeshCount()
@@ -391,7 +391,7 @@ public class PMXModel : MMDModel
 
     public override unsafe MMDSubMesh* GetSubMeshes()
     {
-        return (MMDSubMesh*)Marshal.UnsafeAddrOfPinnedArrayElement(subMeshes, 0);
+        return subMeshes.Data();
     }
 
     public override MMDPhysics? GetMMDPhysics()
