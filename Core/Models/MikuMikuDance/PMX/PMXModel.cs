@@ -315,7 +315,7 @@ public class PMXModel : MMDModel
 
         BeginAnimation();
 
-        foreach (PMXNode node in nodeMan!.Nodes)
+        foreach (PMXNode node in nodeMan.Nodes)
         {
             node.UpdateLocalTransform();
         }
@@ -330,7 +330,7 @@ public class PMXModel : MMDModel
             ikSolver.Enable = true;
         }
 
-        foreach (PMXNode node in nodeMan!.Nodes)
+        foreach (PMXNode node in nodeMan.Nodes)
         {
             if (node.Parent == null)
             {
@@ -368,12 +368,98 @@ public class PMXModel : MMDModel
 
     public override void BeginAnimation()
     {
-        throw new NotImplementedException();
+        foreach (PMXNode node in nodeMan!.Nodes)
+        {
+            node.BeginUpdateTransform();
+        }
+
+        int vtxCount = morphPositions.Length;
+        for (int i = 0; i < vtxCount; i++)
+        {
+            morphPositions[i] = Vector3D<float>.Zero;
+            morphUVs[i] = Vector4D<float>.Zero;
+        }
     }
 
     public override void EndAnimation()
     {
-        throw new NotImplementedException();
+        foreach (PMXNode node in nodeMan!.Nodes)
+        {
+            node.EndUpdateTransform();
+        }
+    }
+
+    public override void UpdateMorphAnimation()
+    {
+        // Morph の処理
+        BeginMorphMaterial();
+
+        List<PMXMorph> morphs = morphMan!.Morphs;
+        for (int i = 0; i < morphs.Count; i++)
+        {
+            Morph(morphs[i], morphs[i].Weight);
+        }
+
+        EndMorphMaterial();
+    }
+
+    public override void UpdateNodeAnimation(bool afterPhysicsAnim)
+    {
+        foreach (PMXNode pmxNode in sortedNodes)
+        {
+            if (pmxNode.IsDeformAfterPhysics != afterPhysicsAnim)
+            {
+                continue;
+            }
+
+            pmxNode.UpdateLocalTransform();
+        }
+
+        foreach (PMXNode pmxNode in sortedNodes)
+        {
+            if (pmxNode.IsDeformAfterPhysics != afterPhysicsAnim)
+            {
+                continue;
+            }
+
+            if (pmxNode.Parent == null)
+            {
+                pmxNode.UpdateGlobalTransform();
+            }
+        }
+
+        foreach (PMXNode pmxNode in sortedNodes)
+        {
+            if (pmxNode.IsDeformAfterPhysics != afterPhysicsAnim)
+            {
+                continue;
+            }
+
+            if (pmxNode.AppendNode != null)
+            {
+                pmxNode.UpdateAppendTransform();
+                pmxNode.UpdateGlobalTransform();
+            }
+
+            if (pmxNode.IkSolver != null)
+            {
+                pmxNode.IkSolver.Solve();
+                pmxNode.UpdateGlobalTransform();
+            }
+        }
+
+        foreach (PMXNode pmxNode in sortedNodes)
+        {
+            if (pmxNode.IsDeformAfterPhysics != afterPhysicsAnim)
+            {
+                continue;
+            }
+
+            if (pmxNode.Parent == null)
+            {
+                pmxNode.UpdateGlobalTransform();
+            }
+        }
     }
 
     public override MMDIkManager? GetIkManager()
@@ -477,16 +563,6 @@ public class PMXModel : MMDModel
     }
 
     public override void Update()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void UpdateMorphAnimation()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void UpdateNodeAnimation(bool afterPhysicsAnim)
     {
         throw new NotImplementedException();
     }
