@@ -1,6 +1,8 @@
 ﻿using Core.Contracts.Elements;
 using Core.Models;
+using Core.Models.MikuMikuDance;
 using Core.Models.MikuMikuDance.PMX;
+using Core.Models.MikuMikuDance.VMD;
 using Silk.NET.OpenGLES;
 using Program = Core.Tools.Program;
 
@@ -18,15 +20,15 @@ public unsafe class MikuMikuModel : BaseElement
 
         if (vmdPath != null)
         {
-            //model.InitializeAnimation();
+            model.InitializeAnimation();
 
-            //VMDAnimation animation = new();
-            //animation.Create(model);
+            VMDAnimation animation = new();
+            animation.Create(model);
 
-            //VMDFile vmd = new(vmdPath);
-            //animation.Add(vmd);
+            VMDFile vmd = new(vmdPath);
+            animation.Add(vmd);
 
-            //animation.SyncPhysics(0.0f);
+            animation.SyncPhysics(0.0f);
         }
 
         Meshes = Array.Empty<Mesh>();
