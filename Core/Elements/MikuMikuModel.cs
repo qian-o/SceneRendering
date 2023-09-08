@@ -18,6 +18,9 @@ public unsafe class MikuMikuModel : BaseElement
 
     public MikuMikuModel(GL gl, string pmxPath, string? vmdPath = null, string? vpdPath = null) : base(gl)
     {
+        PMXModel model = new();
+        model.Load(pmxPath, "Resources/Textures");
+
         _pmx = new PMXFile(pmxPath);
 
         if (vmdPath != null)

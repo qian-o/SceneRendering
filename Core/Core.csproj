@@ -226,6 +226,36 @@
 		<None Update="Resources\Textures\skybox\top.jpg">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Resources\Textures\toon01.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon02.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon03.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon04.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon05.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon06.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon07.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon08.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon09.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Textures\toon10.bmp">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Resources\Textures\wood_floor.jpg">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

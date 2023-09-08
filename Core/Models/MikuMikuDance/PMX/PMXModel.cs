@@ -40,7 +40,7 @@ public unsafe struct VertexBoneInfo
 }
 #endregion
 
-public class PMXModel : MMDModel
+public unsafe class PMXModel : MMDModel
 {
     #region Enums
     public enum MorphType
@@ -255,6 +255,75 @@ public class PMXModel : MMDModel
         PMXFile pmx = new(path);
 
         string dirPath = Path.GetDirectoryName(path)!;
+
+        int vertexCount = pmx.Vertices.Count;
+        Array.Resize(ref positions, vertexCount);
+        Array.Resize(ref normals, vertexCount);
+        Array.Resize(ref uvs, vertexCount);
+        Array.Resize(ref vertexBoneInfos, vertexCount);
+        bboxMax = new Vector3D<float>(float.MinValue);
+        bboxMin = new Vector3D<float>(float.MaxValue);
+
+        bool warnSDEF = false;
+        bool infoQDEF = false;
+        for (int i = 0; i < pmx.Vertices.Count; i++)
+        {
+            Vertex v = pmx.Vertices[i];
+
+            Vector3D<float> pos = v.Position * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+            Vector3D<float> nor = v.Normal * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+            Vector2D<float> uv = new(v.UV.X, 1.0f - v.UV.Y);
+            positions[i] = pos;
+            normals[i] = nor;
+            uvs[i] = uv;
+
+            VertexBoneInfo vtxBoneInfo = new();
+            if (v.WeightType == VertexWeight.SDEF)
+            {
+                vtxBoneInfo.BoneIndex[0] = v.BoneIndices[0];
+                vtxBoneInfo.BoneIndex[1] = v.BoneIndices[1];
+                vtxBoneInfo.BoneIndex[2] = v.BoneIndices[2];
+                vtxBoneInfo.BoneIndex[3] = v.BoneIndices[3];
+
+                vtxBoneInfo.BoneWeight[0] = v.BoneWeights[0];
+                vtxBoneInfo.BoneWeight[1] = v.BoneWeights[1];
+                vtxBoneInfo.BoneWeight[2] = v.BoneWeights[2];
+                vtxBoneInfo.BoneWeight[3] = v.BoneWeights[3];
+            }
+
+            switch (v.WeightType)
+            {
+                case VertexWeight.BDEF1:
+                    vtxBoneInfo.SkinningType = SkinningType.Weight1;
+                    break;
+                case VertexWeight.BDEF2:
+                    vtxBoneInfo.SkinningType = SkinningType.Weight2;
+                    vtxBoneInfo.BoneWeight[1] = 1.0f - vtxBoneInfo.BoneWeight[0];
+                    break;
+                case VertexWeight.BDEF4:
+                    vtxBoneInfo.SkinningType = SkinningType.Weight4;
+                    break;
+                case VertexWeight.SDEF:
+                    if (!warnSDEF)
+                    {
+                        Console.WriteLine("Use SDEF");
+
+                        warnSDEF = true;
+                    }
+                    vtxBoneInfo.SkinningType = SkinningType.SDEF;
+                    {
+                        int i0 = vtxBoneInfo.BoneIndex[0];
+                        int i1 = vtxBoneInfo.BoneIndex[1];
+                        float w0 = vtxBoneInfo.BoneWeight[0];
+                        float w1 = 1.0f - w0;
+                    }
+                    break;
+                case VertexWeight.QDEF:
+                    break;
+                default:
+                    break;
+            }
+        }
 
         return true;
     }
