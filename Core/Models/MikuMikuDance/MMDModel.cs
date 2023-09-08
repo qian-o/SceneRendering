@@ -71,7 +71,7 @@ public unsafe abstract class MMDModel
 
     public abstract int GetMaterialCount();
 
-    public abstract MMDMaterial* GetMaterials();
+    public abstract MMDMaterial[] GetMaterials();
 
     public abstract int GetSubMeshCount();
 
@@ -271,7 +271,7 @@ public unsafe abstract class MMDModel
             return Nodes.FindIndex(node => node.Name == name);
         }
 
-        public override MMDNode GetMMDNode(int index)
+        public override TNode GetMMDNode(int index)
         {
             return Nodes[index];
         }

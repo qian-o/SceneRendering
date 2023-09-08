@@ -23,19 +23,19 @@ public unsafe struct MMDMaterial
 
     public Vector3D<float> Ambient;
 
-    public SphereTextureMode EdgeFlag;
+    public byte EdgeFlag;
 
     public float EdgeSize;
 
     public Vector4D<float> EdgeColor;
 
-    public fixed char Texture[1024];
+    public string Texture;
 
-    public fixed char SpTexture[1024];
+    public string SpTexture;
 
     public SphereTextureMode SpTextureMode;
 
-    public fixed char ToonTexture[1024];
+    public string ToonTexture;
 
     public Vector4D<float> TextureMulFactor;
 

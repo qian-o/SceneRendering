@@ -19,13 +19,41 @@ public static unsafe class BinaryReaderExtensions
 
     public static int ReadIndex(this BinaryReader binaryReader, byte indexSize)
     {
-        return indexSize switch
+        switch (indexSize)
         {
-            1 => binaryReader.ReadByte(),
-            2 => binaryReader.ReadUInt16(),
-            4 => binaryReader.ReadInt32(),
-            _ => throw new ArgumentOutOfRangeException(nameof(indexSize), indexSize, null),
-        };
+            case 1:
+                {
+                    byte index = binaryReader.ReadByte();
+                    if (index == byte.MaxValue)
+                    {
+                        return -1;
+                    }
+
+                    return index;
+                }
+            case 2:
+                {
+                    ushort index = binaryReader.ReadUInt16();
+                    if (index == ushort.MaxValue)
+                    {
+                        return -1;
+                    }
+
+                    return index;
+                }
+            case 4:
+                {
+                    uint index = binaryReader.ReadUInt32();
+                    if (index == uint.MaxValue)
+                    {
+                        return -1;
+                    }
+
+                    return (int)index;
+                }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(indexSize), indexSize, null);
+        }
     }
 
     public static ushort[] ReadUInt16s(this BinaryReader binaryReader, int count)

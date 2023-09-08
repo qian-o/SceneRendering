@@ -1,5 +1,6 @@
 ﻿using Core.Helpers;
 using Silk.NET.Maths;
+using System.Runtime.InteropServices;
 
 namespace Core.Models.MikuMikuDance.PMX;
 
@@ -62,9 +63,9 @@ public unsafe class PMXModel : MMDModel
         public Vector3D<float> Position;
     }
 
-    private struct PositionMorphData
+    private class PositionMorphData
     {
-        public PositionMorph[] MorphVertices;
+        public List<PositionMorph> MorphVertices { get; set; } = new();
     }
 
     private struct UVMorph
@@ -74,9 +75,9 @@ public unsafe class PMXModel : MMDModel
         public Vector4D<float> UV;
     }
 
-    private struct UVMorphData
+    private class UVMorphData
     {
-        public UVMorph[] MorphUVs;
+        public List<UVMorph> MorphUVs { get; set; } = new();
     }
 
     private struct MaterialFactor
@@ -160,9 +161,9 @@ public unsafe class PMXModel : MMDModel
         public Quaternion<float> Rotate;
     }
 
-    private struct BoneMorphData
+    private class BoneMorphData
     {
-        public BoneMorphElement[] BoneMorphs;
+        public List<BoneMorphElement> BoneMorphs { get; set; } = new();
     }
 
     private struct GroupMorphData
@@ -201,11 +202,11 @@ public unsafe class PMXModel : MMDModel
     private int indexCount;
     private int indexElementSize;
 
-    private PositionMorphData[] positionMorphDatas = Array.Empty<PositionMorphData>();
-    private UVMorphData[] uvMorphDatas = Array.Empty<UVMorphData>();
-    private MaterialMorphData[] materialMorphDatas = Array.Empty<MaterialMorphData>();
-    private BoneMorphData[] boneMorphDatas = Array.Empty<BoneMorphData>();
-    private GroupMorphData[] groupMorphDatas = Array.Empty<GroupMorphData>();
+    private readonly List<PositionMorphData> positionMorphDatas = new();
+    private readonly List<UVMorphData> uvMorphDatas = new();
+    private readonly List<MaterialMorphData> materialMorphDatas = new();
+    private readonly List<BoneMorphData> boneMorphDatas = new();
+    private readonly List<GroupMorphData> groupMorphDatas = new();
 
     // PositionMorph用
     private Vector3D<float>[] morphPositions = Array.Empty<Vector3D<float>>();
@@ -316,14 +317,489 @@ public unsafe class PMXModel : MMDModel
                         int i1 = vtxBoneInfo.BoneIndex[1];
                         float w0 = vtxBoneInfo.BoneWeight[0];
                         float w1 = 1.0f - w0;
+
+                        Vector3D<float> center = v.SdefC * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+                        Vector3D<float> r0 = v.SdefR0 * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+                        Vector3D<float> r1 = v.SdefR1 * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+                        Vector3D<float> rw = (r0 * w0) + (r1 * w1);
+                        r0 = center + r0 - rw;
+                        r1 = center + r1 - rw;
+                        Vector3D<float> cr0 = (center + r0) * 0.5f;
+                        Vector3D<float> cr1 = (center + r1) * 0.5f;
+
+                        vtxBoneInfo.SDEF.BoneIndex[0] = v.BoneIndices[0];
+                        vtxBoneInfo.SDEF.BoneIndex[1] = v.BoneIndices[1];
+                        vtxBoneInfo.SDEF.BoneWeight = v.BoneWeights[0];
+                        vtxBoneInfo.SDEF.C = center;
+                        vtxBoneInfo.SDEF.R0 = r0;
+                        vtxBoneInfo.SDEF.R1 = r1;
                     }
                     break;
                 case VertexWeight.QDEF:
+                    vtxBoneInfo.SkinningType = SkinningType.DualQuaternion;
+                    if (!infoQDEF)
+                    {
+                        Console.WriteLine("Use QDEF");
+
+                        infoQDEF = true;
+                    }
                     break;
                 default:
+                    vtxBoneInfo.SkinningType = SkinningType.Weight1;
+                    Console.WriteLine("Unknown WeightType");
                     break;
             }
+            vertexBoneInfos[i] = vtxBoneInfo;
+
+            bboxMax = Vector3D.Max(bboxMax, pos);
+            bboxMin = Vector3D.Min(bboxMin, pos);
         }
+        Array.Resize(ref morphPositions, vertexCount);
+        Array.Resize(ref morphUVs, vertexCount);
+        Array.Resize(ref updateNormals, vertexCount);
+        Array.Resize(ref updateUVs, vertexCount);
+
+        indexElementSize = pmx.Header.VertexIndexSize;
+        Array.Resize(ref indices, pmx.Faces.Count * 3 * indexElementSize);
+        indexCount = pmx.Faces.Count * 3;
+        switch (indexElementSize)
+        {
+            case 1:
+                {
+                    int idx = 0;
+                    Span<byte> bytes = MemoryMarshal.Cast<char, byte>(indices);
+                    foreach (Face face in pmx.Faces)
+                    {
+                        bytes[idx++] = (byte)face.Vertices[2];
+                        bytes[idx++] = (byte)face.Vertices[1];
+                        bytes[idx++] = (byte)face.Vertices[0];
+                    }
+                }
+                break;
+            case 2:
+                {
+                    int idx = 0;
+                    Span<ushort> ushorts = MemoryMarshal.Cast<char, ushort>(indices);
+                    foreach (Face face in pmx.Faces)
+                    {
+                        ushorts[idx++] = (ushort)face.Vertices[2];
+                        ushorts[idx++] = (ushort)face.Vertices[1];
+                        ushorts[idx++] = (ushort)face.Vertices[0];
+                    }
+                }
+                break;
+            case 4:
+                {
+                    int idx = 0;
+                    Span<uint> uints = MemoryMarshal.Cast<char, uint>(indices);
+                    foreach (Face face in pmx.Faces)
+                    {
+                        uints[idx++] = face.Vertices[2];
+                        uints[idx++] = face.Vertices[1];
+                        uints[idx++] = face.Vertices[0];
+                    }
+                }
+                break;
+            default:
+                Console.WriteLine("Unknown IndexSize");
+                return false;
+        }
+
+        string[] texturePaths = pmx.Textures.Select(x => Path.Combine(dirPath, x.Name)).ToArray();
+
+        // Materialをコピー
+        Array.Resize(ref materials, pmx.Materials.Count);
+        Array.Resize(ref subMeshes, pmx.Materials.Count);
+        uint beginIndex = 0;
+        for (int i = 0; i < pmx.Materials.Count; i++)
+        {
+            Material pmxMat = pmx.Materials[i];
+
+            MMDMaterial mat = new()
+            {
+                Diffuse = pmxMat.Diffuse.ToVector3D(),
+                Alpha = pmxMat.Diffuse.W,
+                Specular = pmxMat.Specular,
+                SpecularPower = pmxMat.SpecularPower,
+                Ambient = pmxMat.Ambient,
+                SpTextureMode = SphereTextureMode.None,
+                BothFace = pmxMat.DrawMode.HasFlag(DrawModeFlags.BothFace),
+                EdgeFlag = Convert.ToByte(pmxMat.DrawMode.HasFlag(DrawModeFlags.DrawEdge)),
+                GroundShadow = pmxMat.DrawMode.HasFlag(DrawModeFlags.GroundShadow),
+                ShadowCaster = pmxMat.DrawMode.HasFlag(DrawModeFlags.CastSelfShadow),
+                ShadowReceiver = pmxMat.DrawMode.HasFlag(DrawModeFlags.RecieveSelfShadow),
+                EdgeSize = pmxMat.EdgeSize,
+                EdgeColor = pmxMat.EdgeColor
+            };
+
+            // Texture
+            if (pmxMat.TextureIndex != -1)
+            {
+                mat.Texture = texturePaths[pmxMat.TextureIndex]!;
+            }
+
+            // ToonTexture
+            if (pmxMat.ToonMode == ToonMode.Common)
+            {
+                if (pmxMat.ToonTextureIndex != -1)
+                {
+                    string texName = pmxMat.ToonTextureIndex + 1 < 10 ? $"0{pmxMat.ToonTextureIndex + 1}" : $"{pmxMat.ToonTextureIndex + 1}";
+
+                    mat.ToonTexture = $"{mmdDataDir}/toon{texName}.bmp";
+                }
+            }
+            else if (pmxMat.ToonMode == ToonMode.Separate)
+            {
+                if (pmxMat.ToonTextureIndex != -1)
+                {
+                    mat.ToonTexture = texturePaths[pmxMat.ToonTextureIndex]!;
+                }
+            }
+
+            // SpTexture
+            if (pmxMat.SphereTextureIndex != -1)
+            {
+                mat.SpTexture = texturePaths[pmxMat.SphereTextureIndex]!;
+                mat.SpTextureMode = SphereTextureMode.None;
+                if (pmxMat.SphereMode == SphereMode.Mul)
+                {
+                    mat.SpTextureMode = SphereTextureMode.Mul;
+                }
+                else if (pmxMat.SphereMode == SphereMode.Add)
+                {
+                    mat.SpTextureMode = SphereTextureMode.Add;
+                }
+                else if (pmxMat.SphereMode == SphereMode.SubTexture)
+                {
+                    // TODO: SphareTexture が SubTexture の処理
+                }
+            }
+
+            materials[i] = mat;
+
+            MMDSubMesh subMesh = new()
+            {
+                BeginIndex = (int)beginIndex,
+                VertexCount = pmxMat.FaceCount,
+                MaterialID = i
+            };
+            subMeshes[i] = subMesh;
+
+            beginIndex = (uint)(beginIndex + pmxMat.FaceCount);
+        }
+        initMaterials = materials.ToArray();
+        Array.Resize(ref mulMaterialFactors, materials.Length);
+        Array.Resize(ref addMaterialFactors, materials.Length);
+
+        // Node
+        nodeMan = new MMDNodeManagerT<PMXNode>();
+        foreach (Bone bone in pmx.Bones)
+        {
+            PMXNode node = nodeMan.AddNode();
+            node.Name = bone.Name;
+        }
+        for (int i = 0; i < pmx.Bones.Count; i++)
+        {
+            int boneIndex = pmx.Bones.Count - i - 1;
+            Bone bone = pmx.Bones[boneIndex];
+            PMXNode node = nodeMan.Nodes[boneIndex];
+
+            // Check if the node is looping
+            bool isLooping = false;
+            if (bone.ParentBoneIndex != -1)
+            {
+                MMDNode? parent = nodeMan.GetMMDNode(bone.ParentBoneIndex);
+                while (parent != null)
+                {
+                    if (parent == node)
+                    {
+                        isLooping = true;
+                        break;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+
+            // Check parent node index
+            if (bone.ParentBoneIndex != -1)
+            {
+                if (bone.ParentBoneIndex >= boneIndex)
+                {
+                    Console.WriteLine($"The parent index of this node is big: bone={boneIndex}");
+                }
+            }
+
+            if (bone.ParentBoneIndex != -1 && isLooping)
+            {
+                Bone parentBone = pmx.Bones[bone.ParentBoneIndex];
+                MMDNode parent = nodeMan.GetMMDNode(bone.ParentBoneIndex);
+                parent.AddChild(node);
+                Vector3D<float> localPos = bone.Position - parentBone.Position;
+                localPos.Z *= -1;
+                node.Translate = localPos;
+            }
+            else
+            {
+                Vector3D<float> localPos = bone.Position;
+                localPos.Z *= -1;
+                node.Translate = localPos;
+            }
+            Matrix4X4<float> init = Matrix4X4.CreateTranslation(new Vector3D<float>(1.0f, 1.0f, -1.0f) * bone.Position);
+            node.GlobalTransform = init;
+            node.CalculateInverseInitTransform();
+
+            node.DeformDepth = bone.DeformDepth;
+            bool deformAfterPhysics = bone.BoneFlags.HasFlag(BoneFlags.DeformAfterPhysics);
+            node.IsDeformAfterPhysics = deformAfterPhysics;
+            bool appendRotate = bone.BoneFlags.HasFlag(BoneFlags.AppendRotate);
+            node.IsAppendRotate = appendRotate;
+            bool appendTranslate = bone.BoneFlags.HasFlag(BoneFlags.AppendTranslate);
+            node.IsAppendTranslate = appendTranslate;
+            if ((appendRotate || appendTranslate) && bone.AppendBoneIndex != -1)
+            {
+                if (bone.AppendBoneIndex >= boneIndex)
+                {
+                    Console.WriteLine($"The parent(morph assignment) index of this node is big: bone={boneIndex}");
+                }
+                bool appendLocal = bone.BoneFlags.HasFlag(BoneFlags.AppendLocal);
+                PMXNode appendNode = nodeMan.GetMMDNode(bone.AppendBoneIndex);
+                float appendWeight = bone.AppendWeight;
+                node.IsAppendLocal = appendLocal;
+                node.AppendNode = appendNode;
+                node.AppendWeight = appendWeight;
+            }
+            node.SaveInitialTRS();
+        }
+        Array.Resize(ref transforms, nodeMan.GetNodeCount());
+
+        sortedNodes = nodeMan.Nodes.ToArray();
+        Array.Sort(sortedNodes, (a, b) => a.DeformDepth - b.DeformDepth);
+
+        // IK
+        ikSolverMan = new MMDIkManagerT<MMDIkSolver>();
+        for (int i = 0; i < pmx.Bones.Count; i++)
+        {
+            Bone bone = pmx.Bones[i];
+            if (bone.BoneFlags.HasFlag(BoneFlags.IK))
+            {
+                MMDIkSolver solver = ikSolverMan!.AddIkSolver();
+                PMXNode ikNode = nodeMan.GetMMDNode(i);
+                solver.IKNode = ikNode;
+                ikNode.IkSolver = solver;
+
+                if (bone.IKTargetBoneIndex < 0 || bone.IKTargetBoneIndex >= nodeMan.GetNodeCount())
+                {
+                    Console.WriteLine($"Wrong IK Target: bone={i} target={bone.IKTargetBoneIndex}");
+                    continue;
+                }
+
+                PMXNode targetNode = nodeMan.GetMMDNode(bone.IKTargetBoneIndex);
+                solver.TargetNode = targetNode;
+
+                foreach (IKLink ikLink in bone.IKLinks)
+                {
+                    var linkNode = nodeMan.GetMMDNode(ikLink.BoneIndex);
+                    if (ikLink.EnableLimit)
+                    {
+                        Vector3D<float> limitMax = ikLink.LowerLimit * new Vector3D<float>(-1.0f);
+                        Vector3D<float> limitMin = ikLink.UpperLimit * new Vector3D<float>(-1.0f);
+                        solver.AddIKChain(linkNode, true, limitMin, limitMax);
+                    }
+                    else
+                    {
+                        solver.AddIKChain(linkNode);
+                    }
+                    linkNode.EnableIK = true;
+                }
+
+                solver.IterateCount = (uint)bone.IKIterationCount;
+                solver.LimitAngle = bone.IKLimit;
+            }
+        }
+
+        // Morph
+        morphMan = new MMDMorphManagerT<PMXMorph>();
+        foreach (Morph pmxMorph in pmx.Morphs)
+        {
+            PMXMorph morph = morphMan.AddMorph();
+            morph.Name = pmxMorph.Name;
+            morph.Weight = 0.0f;
+            morph.MorphType = MorphType.None;
+            if (pmxMorph.MorphType == PMX.MorphType.Position)
+            {
+                morph.MorphType = MorphType.Position;
+                morph.DataIndex = positionMorphDatas.Count;
+                PositionMorphData morphData = new();
+                foreach (PMX.PositionMorph vtx in pmxMorph.PositionMorphs)
+                {
+                    PositionMorph morphVtx = new()
+                    {
+                        Index = (uint)vtx.VertexIndex,
+                        Position = vtx.Position * new Vector3D<float>(1.0f, 1.0f, -1.0f)
+                    };
+                    morphData.MorphVertices.Add(morphVtx);
+                }
+                positionMorphDatas.Add(morphData);
+            }
+            else if (pmxMorph.MorphType == PMX.MorphType.UV)
+            {
+                morph.MorphType = MorphType.UV;
+                morph.DataIndex = uvMorphDatas.Count;
+                UVMorphData morphData = new();
+                foreach (PMX.UVMorph uv in pmxMorph.UVMorphs)
+                {
+                    UVMorph morphUV;
+                    morphUV.Index = (uint)uv.VertexIndex;
+                    morphUV.UV = uv.UV;
+                    morphData.MorphUVs.Add(morphUV);
+                }
+                uvMorphDatas.Add(morphData);
+            }
+            else if (pmxMorph.MorphType == PMX.MorphType.Material)
+            {
+                morph.MorphType = MorphType.Material;
+                morph.DataIndex = materialMorphDatas.Count;
+
+                MaterialMorphData materialMorphData = new()
+                {
+                    MaterialMorphs = pmxMorph.MaterialMorphs.ToArray()
+                };
+                materialMorphDatas.Add(materialMorphData);
+            }
+            else if (pmxMorph.MorphType == PMX.MorphType.Bone)
+            {
+                morph.MorphType = MorphType.Bone;
+                morph.DataIndex = boneMorphDatas.Count;
+
+                BoneMorphData boneMorphData = new();
+                foreach (BoneMorph pmxBoneMorphElem in pmxMorph.BoneMorphs)
+                {
+                    BoneMorphElement boneMorphElem;
+                    boneMorphElem.Node = nodeMan.GetMMDNode(pmxBoneMorphElem.BoneIndex);
+                    boneMorphElem.Position = pmxBoneMorphElem.Position * new Vector3D<float>(1.0f, 1.0f, -1.0f);
+                    Quaternion<float> q = pmxBoneMorphElem.Quaternion;
+                    Matrix4X4<float> invZ = Matrix4X4.CreateScale(new Vector3D<float>(1.0f, 1.0f, -1.0f));
+                    Matrix4X4<float> rot0 = Matrix4X4.CreateFromQuaternion(q);
+                    Matrix4X4<float> rot1 = invZ * rot0 * invZ;
+                    boneMorphElem.Rotate = Quaternion<float>.CreateFromRotationMatrix(rot1);
+                    boneMorphData.BoneMorphs.Add(boneMorphElem);
+                }
+                boneMorphDatas.Add(boneMorphData);
+            }
+            else if (pmxMorph.MorphType == PMX.MorphType.Group)
+            {
+                morph.MorphType = MorphType.Group;
+                morph.DataIndex = groupMorphDatas.Count;
+
+                GroupMorphData groupMorphData = new()
+                {
+                    GroupMorphs = pmxMorph.GroupMorphs.ToArray()
+                };
+                groupMorphDatas.Add(groupMorphData);
+            }
+            else
+            {
+                Console.WriteLine($"Not Supported Morp Type({pmxMorph.MorphType}): [{pmxMorph.Name}]");
+            }
+        }
+
+        // Check whether Group Morph infinite loop.
+        {
+            List<int> groupMorphStack = new();
+            void FixInifinitGropuMorph(int morphIdx)
+            {
+                List<PMXMorph> morphs = morphMan.Morphs;
+                PMXMorph morph = morphs[morphIdx];
+
+                if (morph.MorphType == MorphType.Group)
+                {
+                    GroupMorphData groupMorphData = groupMorphDatas[morph.DataIndex];
+                    for (int i = 0; i < groupMorphData.GroupMorphs.Length; i++)
+                    {
+                        GroupMorph groupMorph = groupMorphData.GroupMorphs[i];
+
+                        int findIt = groupMorphStack.IndexOf(groupMorph.MorphIndex);
+                        if (findIt != -1)
+                        {
+                            Console.WriteLine($"Infinit Group Morph:[{morphIdx}][{morph.Name}][{i}]");
+
+                            groupMorph.MorphIndex = -1;
+                        }
+                        else
+                        {
+                            groupMorphStack.Add(morphIdx);
+                            if (groupMorph.MorphIndex > 0)
+                            {
+                                FixInifinitGropuMorph(groupMorph.MorphIndex);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Invalid morph index: group={groupMorph.MorphIndex}, morph={morphIdx}");
+                            }
+                            groupMorphStack.RemoveAt(groupMorphStack.Count - 1);
+                        }
+                    }
+                }
+            }
+
+            for (int morphIdx = 0; morphIdx < morphMan.GetMorphCount(); morphIdx++)
+            {
+                FixInifinitGropuMorph(morphIdx);
+                groupMorphStack.Clear();
+            }
+        }
+
+        // Physics
+        physicsMan = new MMDPhysicsManager();
+        if (!physicsMan.Create())
+        {
+            Console.WriteLine("Create Physics Fail.");
+            return false;
+        }
+
+        foreach (Rigidbody pmxRB in pmx.Rigidbodies)
+        {
+            MMDRigidBody rb = physicsMan.AddRigidBody();
+            MMDNode? node = null;
+            if (pmxRB.BoneIndex != -1)
+            {
+                node = nodeMan.GetMMDNode(pmxRB.BoneIndex);
+            }
+            if (!rb.Create(pmxRB, this, node!))
+            {
+                Console.WriteLine("Create Rigid Body Fail.");
+                return false;
+            }
+            physicsMan.MMDPhysics!.AddRigidBody(rb);
+        }
+
+        foreach (Joint pmxJoint in pmx.Joints)
+        {
+            if (pmxJoint.RigidBodyIndexA != -1
+                && pmxJoint.RigidBodyIndexB != -1
+                && pmxJoint.RigidBodyIndexA != pmxJoint.RigidBodyIndexB)
+            {
+                MMDJoint joint = physicsMan.AddJoint();
+                List<MMDRigidBody> rigidBodys = physicsMan.RigidBodys;
+                bool ret = joint.CreateJoint(pmxJoint,
+                                             rigidBodys[pmxJoint.RigidBodyIndexA],
+                                             rigidBodys[pmxJoint.RigidBodyIndexB]);
+                if (!ret)
+                {
+                    Console.WriteLine("Create Joint Fail.");
+                    return false;
+                }
+                physicsMan.MMDPhysics!.AddJoint(joint);
+            }
+            else
+            {
+                Console.WriteLine($"Illegal Joint [{pmxJoint.Name}]");
+            }
+        }
+
+        ResetPhysics();
+
+        SetupParallelUpdate();
 
         return true;
     }
@@ -408,7 +884,101 @@ public unsafe class PMXModel : MMDModel
 
     private void Update(UpdateRange range)
     {
+        Span<Vector3D<float>> position = positions.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector3D<float>> normal = normals.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector2D<float>> uv = uvs.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector3D<float>> morphPos = morphPositions.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector4D<float>> morphUV = morphUVs.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<VertexBoneInfo> vtxInfo = vertexBoneInfos.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Matrix4X4<float>> transforms = this.transforms.AsSpan();
+        Span<Vector3D<float>> updatePosition = updatePositions.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector3D<float>> updateNormal = updateNormals.AsSpan(range.VertexOffset, range.VertexCount);
+        Span<Vector2D<float>> updateUV = updateUVs.AsSpan(range.VertexOffset, range.VertexCount);
 
+        for (int i = 0; i < range.VertexCount; i++)
+        {
+            Matrix4X4<float> m = Matrix4X4<float>.Identity;
+            switch (vtxInfo[i].SkinningType)
+            {
+                case SkinningType.Weight1:
+                    {
+                        int i0 = vtxInfo[i].BoneIndex[0];
+                        Matrix4X4<float> m0 = transforms[i0];
+                        m = m0;
+                    }
+                    break;
+                case SkinningType.Weight2:
+                    {
+                        int i0 = vtxInfo[i].BoneIndex[0];
+                        int i1 = vtxInfo[i].BoneIndex[1];
+                        float w0 = vtxInfo[i].BoneWeight[0];
+                        float w1 = vtxInfo[i].BoneWeight[1];
+                        Matrix4X4<float> m0 = transforms[i0];
+                        Matrix4X4<float> m1 = transforms[i1];
+                        m = m0 * w0 + m1 * w1;
+                    }
+                    break;
+                case SkinningType.Weight4:
+                    {
+                        int i0 = vtxInfo[i].BoneIndex[0];
+                        int i1 = vtxInfo[i].BoneIndex[1];
+                        int i2 = vtxInfo[i].BoneIndex[2];
+                        int i3 = vtxInfo[i].BoneIndex[3];
+                        float w0 = vtxInfo[i].BoneWeight[0];
+                        float w1 = vtxInfo[i].BoneWeight[1];
+                        float w2 = vtxInfo[i].BoneWeight[2];
+                        float w3 = vtxInfo[i].BoneWeight[3];
+                        Matrix4X4<float> m0 = transforms[i0];
+                        Matrix4X4<float> m1 = transforms[i1];
+                        Matrix4X4<float> m2 = transforms[i2];
+                        Matrix4X4<float> m3 = transforms[i3];
+                        m = m0 * w0 + m1 * w1 + m2 * w2 + m3 * w3;
+                    }
+                    break;
+                case SkinningType.SDEF:
+                    {
+                        // https://github.com/powroupi/blender_mmd_tools/blob/dev_test/mmd_tools/core/sdef.py
+
+                        List<PMXNode> nodes = nodeMan!.Nodes;
+                        int i0 = vtxInfo[i].SDEF.BoneIndex[0];
+                        int i1 = vtxInfo[i].SDEF.BoneIndex[1];
+                        float w0 = vtxInfo[i].SDEF.BoneWeight;
+                        float w1 = 1.0f - w0;
+                        Vector3D<float> center = vtxInfo[i].SDEF.C;
+                        Vector3D<float> cr0 = vtxInfo[i].SDEF.R0;
+                        Vector3D<float> cr1 = vtxInfo[i].SDEF.R1;
+                        Quaternion<float> q0 = Quaternion<float>.CreateFromRotationMatrix(nodes[i0].GlobalTransform);
+                        Quaternion<float> q1 = Quaternion<float>.CreateFromRotationMatrix(nodes[i1].GlobalTransform);
+                        Matrix4X4<float> m0 = transforms[i0];
+                        Matrix4X4<float> m1 = transforms[i1];
+
+                        Vector3D<float> pos = position[i] + morphPos[i];
+                        Matrix3X3<float> rot_mat = Matrix3X3.CreateFromQuaternion(Quaternion<float>.Slerp(q0, q1, w1));
+
+                        updatePosition[i] = Vector3D.Multiply(pos - center, rot_mat) + Vector4D.Multiply(new Vector4D<float>(cr0, 1.0f), m0).ToVector3D() + Vector4D.Multiply(new Vector4D<float>(cr1, 1.0f), m1).ToVector3D();
+                        updateNormal[i] = Vector3D.Multiply(normal[i], rot_mat);
+                    }
+                    break;
+                case SkinningType.DualQuaternion:
+                    {
+                        //
+                        // Skinning with Dual Quaternions
+                        // https://www.cs.utah.edu/~ladislav/dq/index.html
+                        //
+
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            if (vtxInfo[i].SkinningType != SkinningType.SDEF)
+            {
+                updatePosition[i] = Vector4D.Multiply(new Vector4D<float>(position[i] + morphPos[i], 1.0f), m).ToVector3D();
+                updateNormal[i] = Vector4D.Normalize(Vector4D.Multiply(new Vector4D<float>(normal[i], 1.0f), m)).ToVector3D();
+            }
+            updateUV[i] = uv[i] + new Vector2D<float>(morphUV[i].X, morphUV[i].Y);
+        }
     }
 
     private void Morph(PMXMorph morph, float weight)
@@ -668,9 +1238,9 @@ public unsafe class PMXModel : MMDModel
         return materials.Length;
     }
 
-    public override unsafe MMDMaterial* GetMaterials()
+    public override MMDMaterial[] GetMaterials()
     {
-        return materials.Data();
+        return materials;
     }
 
     public override int GetSubMeshCount()
