@@ -211,9 +211,9 @@ public unsafe class Model : BaseElement
             if (!_cache.TryGetValue(path.AsString, out Texture2D? texture))
             {
                 texture = new(_gl, GLEnum.Rgba, GLEnum.UnsignedByte);
-                texture.WriteImage(Path.Combine(_directory, path.ToString()));
+                texture.WriteImage(Path.Combine(_directory, path.AsString));
 
-                _cache.Add(path.ToString(), texture);
+                _cache.Add(path.AsString, texture);
             }
 
             materialTextures.Add(texture);
