@@ -28,8 +28,6 @@ public unsafe class GameWindow : Game
     private Model kafka = null!;
     private Model ark = null!;
     private Model animationTest = null!;
-    private MikuMikuModel mmd1 = null!;
-    private MikuMikuModel mmd2 = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
     #endregion
@@ -95,7 +93,7 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateTranslation(0.0f, 0.005f, -5.0f)
         };
 
-        ark = new Model(gl, "Resources/Models/Ark/Ark.obj")
+        ark = new Model(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx")
         {
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
@@ -106,16 +104,6 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(-15.0f, 0.005f, -15.0f)
         };
         animationTest.Animator.PlayAnimation(animationTest.Animations[0]);
-
-        mmd1 = new(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx", vmdPath: "Resources/Models/大喜/动作数据/大喜MMD动作数据-喜鹊泠鸢专用版.vmd")
-        {
-            Transform = Matrix4X4.CreateScale(0.1f) * Matrix4X4.CreateTranslation(-5.0f, 0.005f, -5.0f)
-        };
-
-        mmd2 = new(gl, "Resources/Models/可莉竖中指/可莉2.0.pmx", vpdPath: "Resources/Models/可莉竖中指/可莉竖中指姿势数据.vpd")
-        {
-            Transform = Matrix4X4.CreateScale(0.1f) * Matrix4X4.CreateTranslation(-10.0f, 0.005f, -10.0f)
-        };
 
         gaussianBlurFilter1 = new Plane(gl)
         {
@@ -188,9 +176,6 @@ public unsafe class GameWindow : Game
 
             animationTest.Animator.UpdateAnimation((float)obj);
             animationTest.Draw(boneProgram);
-
-            mmd1.Draw(boneProgram);
-            mmd2.Draw(boneProgram);
 
             boneProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             boneProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
