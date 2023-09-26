@@ -26,7 +26,7 @@ public unsafe class GameWindow : Game
     private Plane floor = null!;
     private Cube cube = null!;
     private Model kafka = null!;
-    private Model ark = null!;
+    private Model yousa = null!;
     private Model animationTest = null!;
     private Plane gaussianBlurFilter1 = null!;
     private Plane gaussianBlurFilter2 = null!;
@@ -93,13 +93,12 @@ public unsafe class GameWindow : Game
             Transform = Matrix4X4.CreateTranslation(0.0f, 0.005f, -5.0f)
         };
 
-        ark = new Model(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx")
+        yousa = new Model(gl, "Resources/Models/大喜/模型/登门喜鹊泠鸢yousa-ver2.0/泠鸢yousa登门喜鹊153cm-Apose2.1完整版(2).pmx")
         {
             Transform = Matrix4X4.CreateScale(new Vector3D<float>(0.1f)) * Matrix4X4.CreateTranslation(5.0f, 0.005f, -5.0f)
         };
 
         animationTest = new Model(gl, "Resources/Models/Vampire/dancing_vampire.dae", true)
-        // animationTest = new Custom(gl, "Resources/Models/测试动画.fbx", true)
         {
             Transform = Matrix4X4.CreateScale(0.01f) * Matrix4X4.CreateTranslation(-15.0f, 0.005f, -15.0f)
         };
@@ -157,7 +156,7 @@ public unsafe class GameWindow : Game
 
             kafka.Draw(textureProgram);
 
-            ark.Draw(textureProgram);
+            yousa.Draw(textureProgram);
 
             textureProgram.DisableAttrib(ShaderHelper.MVP_PositionAttrib);
             textureProgram.DisableAttrib(ShaderHelper.MVP_NormalAttrib);
