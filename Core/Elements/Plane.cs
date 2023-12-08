@@ -11,8 +11,6 @@ namespace Core.Elements;
 
 public class Plane : BaseElement
 {
-    public override Mesh[] Meshes { get; }
-
     public Plane(GL gl) : this(gl, new Vector2D<float>(1.0f, 1.0f))
     {
 
@@ -39,6 +37,8 @@ public class Plane : BaseElement
 
         Meshes = new Mesh[] { new Mesh(gl, vertices, indices, new Texture2D(gl, GLEnum.Rgba, GLEnum.Repeat), new Texture2D(gl, GLEnum.Rgba, GLEnum.Repeat)) };
     }
+
+    public override Mesh[] Meshes { get; }
 
     public Texture2D GetDiffuseTex()
     {

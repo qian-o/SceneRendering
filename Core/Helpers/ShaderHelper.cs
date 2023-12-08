@@ -62,7 +62,7 @@ uniform mat4 projection;
 
 void main() {{
    gl_Position = projection * view * model * vec4(position, 1.0);
-   Normal = mat3(transpose(inverse(model))) * normal;
+   Normal = mat3(view * model) * normal;
    FragPos = vec3(model * vec4(position, 1.0));
    TexCoords = texCoords;
 }}
@@ -78,6 +78,7 @@ void main() {{
 
 precision highp float;
 
+in vec3 Normal;
 in vec2 TexCoords;
 
 out vec4 FragColor;
@@ -85,11 +86,15 @@ out vec4 FragColor;
 uniform sampler2D tex;
 
 void main() {{
+    vec3 norm = normalize(Normal);
     vec4 texColor = vec4(texture(tex, TexCoords));
 
 {(discardAlpha ? da : string.Empty)}
 
-    FragColor = texColor;
+    if(norm.z <= 0.0)
+        FragColor = vec4(0.1, 0, 0, texColor.a);
+    else
+        FragColor = vec4(texColor.rgb * norm.z, texColor.a);
 }}
 ";
     }
